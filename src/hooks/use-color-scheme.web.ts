@@ -7,8 +7,11 @@ import { useColorScheme as useRNColorScheme } from 'react-native';
 export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 
+  // The flag must flip after the first paint, not during the effect, so the
+  // hydration render stays cascades-free.
   useEffect(() => {
-    setHasHydrated(true);
+    const frame = requestAnimationFrame(() => setHasHydrated(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const colorScheme = useRNColorScheme();

@@ -1,0 +1,103 @@
+/**
+ * Every Lucide icon the app uses, imported one file each. Importing from the
+ * `lucide-react-native` index makes Metro open its ~4,000 icon files on every
+ * bundle, which crashes the dev server on Windows with "EMFILE: too many open
+ * files". ESLint blocks that import; add new icons here instead (the file name
+ * is the icon's kebab-case name, e.g. `Building2` lives in `building-complex`).
+ */
+// eslint-disable-next-line no-restricted-imports -- type-only, erased at build time
+export type { LucideIcon } from 'lucide-react-native';
+
+export { default as Apple } from 'lucide-react-native/icons/apple';
+export { default as ArrowLeft } from 'lucide-react-native/icons/arrow-left';
+export { default as ArrowRight } from 'lucide-react-native/icons/arrow-right';
+export { default as AudioLines } from 'lucide-react-native/icons/audio-lines';
+export { default as BadgeCheck } from 'lucide-react-native/icons/badge-check';
+export { default as Banknote } from 'lucide-react-native/icons/banknote';
+export { default as Bell } from 'lucide-react-native/icons/bell';
+export { default as Bookmark } from 'lucide-react-native/icons/bookmark';
+export { default as BrickWall } from 'lucide-react-native/icons/brick-wall';
+export { default as Building2 } from 'lucide-react-native/icons/building-complex';
+export { default as CalendarClock } from 'lucide-react-native/icons/calendar-clock';
+export { default as CalendarDays } from 'lucide-react-native/icons/calendar-days';
+export { default as CalendarRange } from 'lucide-react-native/icons/calendar-range';
+export { default as Camera } from 'lucide-react-native/icons/camera';
+export { default as Check } from 'lucide-react-native/icons/check';
+export { default as CheckCircle2 } from 'lucide-react-native/icons/circle-check';
+export { default as ChevronDown } from 'lucide-react-native/icons/chevron-down';
+export { default as ChevronLeft } from 'lucide-react-native/icons/chevron-left';
+export { default as ChevronRight } from 'lucide-react-native/icons/chevron-right';
+export { default as CircleDot } from 'lucide-react-native/icons/circle-dot';
+export { default as CircleHelp } from 'lucide-react-native/icons/circle-question-mark';
+export { default as CircleX } from 'lucide-react-native/icons/circle-x';
+export { default as Clock } from 'lucide-react-native/icons/clock';
+export { default as CloudRain } from 'lucide-react-native/icons/cloud-rain';
+export { default as Coins } from 'lucide-react-native/icons/coins';
+export { default as ExternalLink } from 'lucide-react-native/icons/external-link';
+export { default as FileText } from 'lucide-react-native/icons/file-text';
+export { default as Gem } from 'lucide-react-native/icons/gem';
+export { default as Gift } from 'lucide-react-native/icons/gift';
+export { default as Handshake } from 'lucide-react-native/icons/handshake';
+export { default as Headset } from 'lucide-react-native/icons/headset';
+export { default as History } from 'lucide-react-native/icons/rotate-ccw-clock';
+export { default as Home } from 'lucide-react-native/icons/house';
+export { default as Hourglass } from 'lucide-react-native/icons/hourglass';
+export { default as ImageIcon } from 'lucide-react-native/icons/image';
+export { default as Images } from 'lucide-react-native/icons/images';
+export { default as IndianRupee } from 'lucide-react-native/icons/indian-rupee';
+export { default as Info } from 'lucide-react-native/icons/info';
+export { default as Keyboard } from 'lucide-react-native/icons/keyboard';
+export { default as Languages } from 'lucide-react-native/icons/languages';
+export { default as LifeBuoy } from 'lucide-react-native/icons/life-buoy';
+export { default as LocateFixed } from 'lucide-react-native/icons/locate-fixed';
+export { default as Lock } from 'lucide-react-native/icons/lock';
+export { default as LogOut } from 'lucide-react-native/icons/log-out';
+export { default as Mail } from 'lucide-react-native/icons/mail';
+export { default as MapIcon } from 'lucide-react-native/icons/map';
+export { default as MapPin } from 'lucide-react-native/icons/map-pin';
+export { default as MapPinned } from 'lucide-react-native/icons/map-pinned';
+export { default as MessageCircle } from 'lucide-react-native/icons/message-circle';
+export { default as Mic } from 'lucide-react-native/icons/mic';
+export { default as Minus } from 'lucide-react-native/icons/minus';
+export { default as Moon } from 'lucide-react-native/icons/moon';
+export { default as Mountain } from 'lucide-react-native/icons/mountain';
+export { default as Navigation } from 'lucide-react-native/icons/navigation';
+export { default as NotebookPen } from 'lucide-react-native/icons/notebook-pen';
+export { default as Package } from 'lucide-react-native/icons/package';
+export { default as PackageCheck } from 'lucide-react-native/icons/package-check';
+export { default as Palette } from 'lucide-react-native/icons/palette';
+export { default as Pencil } from 'lucide-react-native/icons/pencil';
+export { default as Phone } from 'lucide-react-native/icons/phone';
+export { default as Pin } from 'lucide-react-native/icons/pin';
+export { default as Play } from 'lucide-react-native/icons/play';
+export { default as Plus } from 'lucide-react-native/icons/plus';
+export { default as Receipt } from 'lucide-react-native/icons/receipt';
+export { default as Route } from 'lucide-react-native/icons/route';
+export { default as Scale } from 'lucide-react-native/icons/scale';
+export { default as School } from 'lucide-react-native/icons/school';
+export { default as ScrollText } from 'lucide-react-native/icons/scroll-text';
+export { default as Search } from 'lucide-react-native/icons/search';
+export { default as Send } from 'lucide-react-native/icons/send';
+export { default as Share2 } from 'lucide-react-native/icons/share-2';
+export { default as Shield } from 'lucide-react-native/icons/shield';
+export { default as ShieldCheck } from 'lucide-react-native/icons/shield-check';
+export { default as Shovel } from 'lucide-react-native/icons/shovel';
+export { default as Smartphone } from 'lucide-react-native/icons/smartphone';
+export { default as Sparkles } from 'lucide-react-native/icons/sparkles';
+export { default as Star } from 'lucide-react-native/icons/star';
+export { default as Sun } from 'lucide-react-native/icons/sun';
+export { default as SunMoon } from 'lucide-react-native/icons/sun-moon';
+export { default as Sunrise } from 'lucide-react-native/icons/sunrise';
+export { default as Sunset } from 'lucide-react-native/icons/sunset';
+export { default as ThumbsUp } from 'lucide-react-native/icons/thumbs-up';
+export { default as Ticket } from 'lucide-react-native/icons/ticket';
+export { default as Timer } from 'lucide-react-native/icons/timer';
+export { default as Trash2 } from 'lucide-react-native/icons/trash';
+export { default as TriangleAlert } from 'lucide-react-native/icons/triangle-alert';
+export { default as Truck } from 'lucide-react-native/icons/truck';
+export { default as User } from 'lucide-react-native/icons/user';
+export { default as UserRoundCheck } from 'lucide-react-native/icons/user-round-check';
+export { default as Wallet } from 'lucide-react-native/icons/wallet';
+export { default as Weight } from 'lucide-react-native/icons/weight';
+export { default as X } from 'lucide-react-native/icons/x';
+export { default as Zap } from 'lucide-react-native/icons/zap';

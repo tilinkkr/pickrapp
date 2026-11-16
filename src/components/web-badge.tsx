@@ -1,13 +1,15 @@
 import { version } from 'expo/package.json';
 import { Image } from 'expo-image';
-import { useColorScheme, StyleSheet } from 'react-native';
+import { useColorScheme } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
+import { makeStyles } from '@/lib/app-theme';
 
 export function WebBadge() {
+  const styles = useStyles();
   const scheme = useColorScheme();
 
   return (
@@ -27,7 +29,7 @@ export function WebBadge() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((Brand) => ({
   container: {
     padding: Spacing.five,
     alignItems: 'center',
@@ -40,4 +42,4 @@ const styles = StyleSheet.create({
     width: 123,
     aspectRatio: 123 / 24,
   },
-});
+}));

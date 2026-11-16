@@ -2,13 +2,14 @@ import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated, { Easing, Keyframe, runOnJS } from 'react-native-reanimated';
+import { makeStyles } from '@/lib/app-theme';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
 export function AnimatedSplashOverlay() {
+  const styles = useStyles();
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
 
@@ -40,7 +41,7 @@ export function AnimatedSplashOverlay() {
       entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
         'worklet';
         if (finished) {
-          scheduleOnRN(setVisible, false);
+          runOnJS(setVisible)(false);
         }
       })}
       style={styles.splashOverlay}>
@@ -96,6 +97,7 @@ const glowKeyframe = new Keyframe({
 });
 
 export function AnimatedIcon() {
+  const styles = useStyles();
   return (
     <View style={styles.iconContainer}>
       <Animated.View entering={glowKeyframe.duration(60 * 1000 * 4)} style={styles.glow}>
@@ -110,7 +112,7 @@ export function AnimatedIcon() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((Brand) => ({
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -145,4 +147,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1000,
   },
-});
+}));
