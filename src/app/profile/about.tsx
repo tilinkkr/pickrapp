@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { PickrTruck } from '@/components/brand/pickr-truck';
 import { ProfilePage, SettingsGroup, SettingsRow } from '@/components/profile/settings';
@@ -10,6 +10,7 @@ import { Apple, FileText, Play, ScrollText, Shield, ThumbsUp } from '@/component
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import type { StringKey } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
+import { enterAt } from '@/lib/motion';
 
 type Legal = { title: StringKey; body: StringKey };
 const LEGAL: Legal[] = [
@@ -33,7 +34,7 @@ export default function AboutScreen() {
 
   return (
     <ProfilePage title={t('about')}>
-      <Animated.View entering={FadeInDown.duration(280)} style={styles.logo}>
+      <Animated.View entering={enterAt()} style={styles.logo}>
         <PickrTruck width={140} color={Brand.primary} withSpeedLines />
         <Text style={styles.word}>PICKR</Text>
         <Text style={styles.tag}>HEAVY LOGISTICS</Text>

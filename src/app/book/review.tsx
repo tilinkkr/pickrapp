@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
 import { ConfirmButton } from '@/components/booking/confirm-button';
+import { ForWhomSheet } from '@/components/booking/for-whom';
 import { Rain } from '@/components/booking/rain';
 import { RouteSummary } from '@/components/booking/route-summary';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -22,6 +23,8 @@ import {
   Pencil,
   Plus,
   Truck,
+  User,
+  UserRoundCheck,
 } from '@/components/ui/icons';
 import { ImagePlaceholder } from '@/components/ui/image-placeholder';
 import { Image } from 'expo-image';
@@ -33,6 +36,8 @@ import { getCategory, pick } from '@/lib/catalog';
 import { useDemoRain } from '@/lib/demo-weather';
 import { type FareLineKey, splitQuote, waitRate } from '@/lib/fare';
 import { selectionHaptic } from '@/lib/haptics';
+import { formatIndianMobile } from '@/lib/otp';
+import { firstName, meetsText, rememberPerson } from '@/lib/people';
 import { asapBlockedUntil, checkSchedule } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { useSites } from '@/lib/sites';
@@ -73,6 +78,7 @@ export default function ReviewStep() {
   // The new trip itself counts as active; it must not lock the button it came from.
   const [placing, setPlacing] = useState(false);
   const [priceHeight, setPriceHeight] = useState(0);
+  const [whoOpen, setWhoOpen] = useState(false);
 
   if (!item || !chosen || !draft.pickup || !draft.delivery) {
     return (
@@ -128,8 +134,10 @@ export default function ReviewStep() {
       payPreference: payMethod,
       notes: draft.notes.trim() || undefined,
       transitPass: draft.transitPass.trim() || undefined,
+      forOther: draft.forOther ?? undefined,
     });
     recordUse([pickup, delivery]);
+    if (draft.forOther) rememberPerson(draft.forOther);
     created.current = { id: trip.id, scheduled: scheduling };
   }
 
@@ -199,7 +207,6 @@ export default function ReviewStep() {
           title={scheduling && check?.ok ? formatWhen(language, check.date) : scheduling ? t('pickSlot') : t('asap')}
           warn={!!timeProblem}
           onEdit={change('/book/site')}
-          last={!item.transitPass}
         />
         {item.transitPass && (
           <Row
@@ -213,10 +220,33 @@ export default function ReviewStep() {
             sub={passReady(draft) ? t('passUploaded') : t('passMissing')}
             warn={!passReady(draft)}
             onEdit={change('/book/pass')}
-            last
           />
         )}
+        {/* Who meets the truck: "For me", or the other person with their number, where they meet it and who pays. */}
+        <Row
+          icon={draft.forOther ? UserRoundCheck : User}
+          title={draft.forOther ? t('forName', { name: draft.forOther.name }) : t('forMe')}
+          sub={
+            // Who pays is stated once, in the fare facts below ("Anu pays the driver").
+            draft.forOther ? `${formatIndianMobile(draft.forOther.phone)} · ${meetsText(t, draft.forOther.meets)}` : t('bookingForMeSub')
+          }
+          subLines={2}
+          onEdit={() => {
+            selectionHaptic();
+            setWhoOpen(true);
+          }}
+          last
+        />
       </View>
+      <ForWhomSheet
+        visible={whoOpen}
+        person={draft.forOther}
+        onClose={() => setWhoOpen(false)}
+        onDone={(person) => {
+          update({ forOther: person });
+          setWhoOpen(false);
+        }}
+      />
 
       <View style={styles.price} onLayout={(e) => setPriceHeight(e.nativeEvent.layout.height)}>
         {raining && <Rain height={priceHeight} />}
@@ -240,7 +270,10 @@ export default function ReviewStep() {
         </View>
         <View style={styles.facts}>
           <Fact icon={Clock} label={t('waitingRule', { rate: waitRate(chosen.vehicle.name) })} />
-          <Fact icon={Banknote} label={`${t('payWith')} ${payLabel}`} />
+          <Fact
+            icon={Banknote}
+            label={draft.forOther?.pays === 'them' ? t('theyPayDriver', { name: firstName(draft.forOther.name) }) : `${t('payWith')} ${payLabel}`}
+          />
           <Fact icon={Package} label={t('noMaterialChip')} />
         </View>
       </View>
@@ -293,6 +326,7 @@ function Row({
   icon: Icon,
   title,
   sub,
+  subLines = 1,
   warn,
   onEdit,
   last,
@@ -301,6 +335,7 @@ function Row({
   icon?: LucideIcon;
   title: string;
   sub?: string;
+  subLines?: number;
   warn?: boolean;
   onEdit: () => void;
   last?: boolean;
@@ -320,7 +355,7 @@ function Row({
           {title}
         </Text>
         {sub && (
-          <Text style={styles.rowSub} numberOfLines={1}>
+          <Text style={styles.rowSub} numberOfLines={subLines}>
             {sub}
           </Text>
         )}

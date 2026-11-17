@@ -2,13 +2,11 @@ import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -16,15 +14,15 @@ import { PickrTruck } from '@/components/brand/pickr-truck';
 import { ProfilePage } from '@/components/profile/settings';
 import { CheckCircle2, Gift, type LucideIcon, Timer, Truck } from '@/components/ui/icons';
 import { makeStyles, useBrand } from '@/lib/app-theme';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { useTrips } from '@/lib/trips';
 
 const PER_TRIP = 20;
 
 /**
- * Pickr coins: an orange hero with the logo truck and a coin that spins and
- * floats, the balance (20 per paid trip, demo until the pilot ends), then the
+ * Pickr coins: an orange hero with the logo truck and a still coin with small
+ * coins rising past it, the balance (20 per paid trip, demo until the pilot ends), then the
  * three ways to earn. Coins cannot be spent yet (handoff section 11).
  */
 export default function CoinsScreen() {
@@ -42,7 +40,7 @@ export default function CoinsScreen() {
 
   return (
     <ProfilePage title={t('pickrCoins')}>
-      <Animated.View entering={FadeInDown.duration(280)} style={styles.hero}>
+      <Animated.View entering={enterAt()} style={styles.hero}>
         <View style={styles.truck}>
           <PickrTruck width={150} color="#FFFFFF" withSpeedLines />
         </View>
@@ -61,7 +59,7 @@ export default function CoinsScreen() {
           {ways.map((way, i) => (
             <Animated.View
               key={way.label}
-              entering={FadeInDown.delay(STAGGER_MS * (1 + i)).springify().damping(18)}
+              entering={enterAt(0, STAGGER_MS * (1 + i))}
               style={[styles.row, i < ways.length - 1 && styles.divider]}>
               <View style={styles.rowIcon}>
                 <way.icon size={20} color={Brand.link} strokeWidth={2.25} />
@@ -80,30 +78,15 @@ export default function CoinsScreen() {
   );
 }
 
-/** A coin that turns on its vertical axis (scaleX) and bobs. */
+/** The coin holds still (no spinning or bobbing, 2026-11-11); the small coins around it do the moving. */
 function SpinningCoin() {
   const styles = useStyles();
-  const reduced = useReducedMotion();
-  const spin = useSharedValue(1);
-  const bob = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduced) return;
-    spin.set(withRepeat(withSequence(withTiming(-1, { duration: 900, easing: Easing.inOut(Easing.sin) }), withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) })), -1));
-    bob.set(withRepeat(withSequence(withTiming(-6, { duration: 1400, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 1400, easing: Easing.inOut(Easing.quad) })), -1));
-  }, [reduced, spin, bob]);
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: bob.value }, { scaleX: Math.max(Math.abs(spin.value), 0.08) }],
-  }));
-  const face = useAnimatedStyle(() => ({ opacity: spin.value >= 0 ? 1 : 0 }));
-
   return (
-    <Animated.View style={[styles.coin, style]}>
+    <View style={styles.coin}>
       <View style={styles.coinInner}>
-        <Animated.Text style={[styles.coinMark, face]}>P</Animated.Text>
+        <Text style={styles.coinMark}>P</Text>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 

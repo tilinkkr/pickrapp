@@ -2,7 +2,7 @@ import { Image, type ImageProps } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TrackMap } from '@/components/trip/track-map';
@@ -16,7 +16,8 @@ import { shortVehicleName } from '@/lib/booking-format';
 import { type FareLineKey, tripFare } from '@/lib/fare';
 import { selectionHaptic } from '@/lib/haptics';
 import { photoSource } from '@/lib/load-photos';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
+import { meetsText, personLine } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { formatDay, formatRupees, formatTime, placeName, stageColors } from '@/lib/trip-format';
 import { useTrips } from '@/lib/trips';
@@ -30,7 +31,7 @@ const FARE_LABEL: Record<FareLineKey, 'fareBase' | 'fareDistance' | 'fareWaiting
   gst: 'fareGst',
 };
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
-const rise = (row: number) => FadeInDown.duration(300).easing(Easing.out(Easing.cubic)).delay(row * STAGGER_MS * 1.5);
+const rise = (row: number) => enterAt(0, row * STAGGER_MS * 1.5);
 
 function duration(from?: Date, to?: Date) {
   if (!from || !to) return null;
@@ -127,6 +128,14 @@ export default function LoadDetail() {
           <Animated.View entering={rise(1)} style={styles.card}>
             <Row icon="circle-outline" label={t('pickupLabel')} value={trip.pickup} />
             <Row icon="map-marker" label={t('dropLabel')} value={trip.delivery} divided />
+            {trip.forOther && (
+              <Row
+                icon="account-arrow-right-outline"
+                label={`${t('bookedFor')} · ${meetsText(t, trip.forOther.meets)}`}
+                value={personLine(trip.forOther)}
+                divided
+              />
+            )}
           </Animated.View>
 
           {trip.driver && (

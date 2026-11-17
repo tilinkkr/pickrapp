@@ -4,7 +4,7 @@ from PIL import Image
 
 node_script = """
 const { toQR } = require('toqr');
-const url = 'exp://c-tilinkkr-wuj91u-mwji5xgt11rme81x.on.expo.app';
+const url = 'exp://c-tilinkkr-wuj91u-mwkxcga3xixuk19z.on.expo.app';
 console.log(JSON.stringify(Array.from(toQR(url))));
 """
 

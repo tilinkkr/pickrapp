@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { type Href, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { SettingsGroup, SettingsRow } from '@/components/profile/settings';
 import { ScreenTitle, TabScreen } from '@/components/tab-screen';
@@ -37,6 +37,7 @@ import { demoRating } from '@/lib/rating';
 import { SERVICE_STATES, setServiceStatus, useServiceStatus } from '@/lib/service-status';
 import { useSession } from '@/lib/session';
 import { useTrips } from '@/lib/trips';
+import { enterAt } from '@/lib/motion';
 
 /**
  * Profile hub (handoff C23), Rapido-style: identity card with the rating
@@ -63,7 +64,7 @@ export default function ProfileScreen() {
     <TabScreen>
       <ScreenTitle>{t('profileTitle')}</ScreenTitle>
 
-      <Animated.View entering={FadeInDown.duration(260)} style={styles.card}>
+      <Animated.View entering={enterAt()} style={styles.card}>
         <PressableScale onPress={customer ? go('/profile/account') : signOut} accessibilityRole="button" style={styles.identity}>
           {customer?.photoUri ? (
             <Image source={{ uri: customer.photoUri }} style={styles.avatar} contentFit="cover" />
@@ -106,7 +107,7 @@ export default function ProfileScreen() {
         </PressableScale>
       )}
 
-      <Animated.View entering={FadeInDown.delay(60).duration(260)} style={styles.section}>
+      <Animated.View entering={enterAt(0, 60)} style={styles.section}>
         <SettingsGroup>
           <SettingsRow icon={History} label={t('myRides')} onPress={go('/profile/rides')} />
           <SettingsRow icon={Wallet} label={t('payments')} onPress={go('/profile/payment')} />

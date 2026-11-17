@@ -28,7 +28,8 @@ import { TripDetailsSheet } from '@/components/trip/trip-details-sheet';
 import { CalendarClock, ChevronDown, CircleX, FileText, Truck } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles, useBrand } from '@/lib/app-theme';
-import { choiceHaptic, errorHaptic, selectionHaptic, successHaptic, tapHaptic } from '@/lib/haptics';
+import { errorHaptic, successHaptic, tapHaptic } from '@/lib/haptics';
+import { CURVE, DURATION } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { cancelFee } from '@/lib/trip-machine';
 import { formatRupees, formatWhen, placeName, useNow } from '@/lib/trip-format';
@@ -40,8 +41,6 @@ const LIVE: TripStage[] = ['to_pickup', 'loading', 'in_transit', 'unloading'];
 const FOUND_MS = 2500;
 /** Share of the screen the map takes in each state. */
 const HERO_SHARE: Partial<Record<TripStage, number>> = { searching: 0.58, to_pickup: 0.3, loading: 0.26, in_transit: 0.46, unloading: 0.26 };
-/** A light tick as the ETA passes each of these minutes. */
-const ETA_MILESTONES = [15, 10, 5];
 
 /**
  * One booking from "placed" to receipt (handoff C11–C20): searching radar,
@@ -61,7 +60,6 @@ export default function TripScreen() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const trip = trips.find((x) => x.id === id);
   const lastStage = useRef<TripStage | undefined>(trip?.stage);
-  const lastEta = useRef<number | undefined>(trip?.etaMinutes);
   const sheetRef = useAnimatedRef<Animated.ScrollView>();
   const stage = trip?.stage;
 
@@ -87,7 +85,7 @@ export default function TripScreen() {
   const heroHeight = Math.round(height * (HERO_SHARE[trip?.stage ?? 'searching'] ?? 0.44));
   const hero = useSharedValue(heroHeight);
   useEffect(() => {
-    hero.set(withTiming(heroHeight, { duration: 420, easing: Easing.out(Easing.cubic) }));
+    hero.set(withTiming(heroHeight, { duration: DURATION.sheet, easing: CURVE.standard }));
   }, [heroHeight, hero]);
   const spacerStyle = useAnimatedStyle(() => ({ height: hero.value - 24 }));
   // The sheet slides up over the map; the map drifts up at half speed and dims.
@@ -102,23 +100,14 @@ export default function TripScreen() {
     return { opacity: shown, transform: [{ translateY: (shown - 1) * 10 }] };
   });
 
-  // ETA milestones are felt, lightly, so a glance at the phone is not needed.
-  useEffect(() => {
-    const eta = trip?.etaMinutes;
-    const previous = lastEta.current;
-    lastEta.current = eta;
-    if (eta == null || previous == null) return;
-    if (ETA_MILESTONES.some((m) => previous > m && eta <= m)) selectionHaptic();
-  }, [trip?.etaMinutes]);
-
-  // Haptic beat for each stage change, so progress is felt as well as seen.
+  // Only the moments that need the customer are felt: a driver accepting, the work being
+  // done, the payment recorded, or no truck found. Routine progress (ETA ticks, arriving,
+  // loading) is seen, not felt, so the phone never buzzes on its own (2026-11-17).
   useEffect(() => {
     if (!trip || lastStage.current === trip.stage) return;
     lastStage.current = trip.stage;
-    if (trip.stage === 'to_pickup') choiceHaptic();
-    else if (trip.stage === 'payment_due' || trip.stage === 'completed') successHaptic();
+    if (trip.stage === 'to_pickup' || trip.stage === 'payment_due' || trip.stage === 'completed') successHaptic();
     else if (trip.stage === 'no_driver') errorHaptic();
-    else tapHaptic();
   }, [trip]);
 
   function goHome() {
@@ -194,8 +183,10 @@ export default function TripScreen() {
     </Animated.View>
   );
 
+  // The zoom-in sits on its own wrapper so it never fights the minimise style over opacity and transform.
   return (
-    <Animated.View entering={screenZoomIn} style={[styles.root, shrinkStyle]}>
+    <Animated.View entering={screenZoomIn} style={styles.flex}>
+    <Animated.View style={[styles.root, shrinkStyle]}>
       {split ? (
         <>
           <Animated.View style={[styles.hero, heroStyle]}>
@@ -272,6 +263,7 @@ export default function TripScreen() {
       />
 
       <TripDetailsSheet trip={trip} visible={detailsOpen} onClose={() => setDetailsOpen(false)} />
+    </Animated.View>
     </Animated.View>
   );
 }

@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/icons";
 import { makeStyles, useAppTheme, useBrand } from "@/lib/app-theme";
 import { choiceHaptic } from "@/lib/haptics";
+import { CURVE, DURATION } from "@/lib/motion";
 
 /** Height of the floating bar; tab screens pad their content by this plus the bottom gap. */
 export const TAB_BAR_HEIGHT = 56;
@@ -26,7 +27,8 @@ const MAX_WIDTH = 340;
 const PAD = 5;
 /** Opacity steps of the fade above the solid strip behind the bar. */
 const FADE = [0.25, 0.5, 0.75, 0.9];
-const SPRING = { damping: 18, stiffness: 220 };
+/** The pill slides across like any on-screen move: Base standard curve, no spring, so it never wobbles at the end. */
+const GLIDE = { duration: DURATION.page, easing: CURVE.standard };
 
 const ICONS: Record<string, LucideIcon> = {
   index: Home,
@@ -55,9 +57,17 @@ export function TabBar({
   const slot = width > 0 ? (width - PAD * 2) / count : 0;
   const x = useSharedValue(0);
 
+  // The first measurement places the pill without a slide; tab changes glide.
+  const placedAt = useSharedValue(0);
   useEffect(() => {
-    if (slot > 0) x.set(withSpring(state.index * slot, SPRING));
-  }, [state.index, slot, x]);
+    if (slot <= 0) return;
+    if (placedAt.get() !== slot) {
+      placedAt.set(slot);
+      x.set(state.index * slot);
+    } else {
+      x.set(withTiming(state.index * slot, GLIDE));
+    }
+  }, [state.index, slot, x, placedAt]);
   const pillStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: x.value }],
   }));

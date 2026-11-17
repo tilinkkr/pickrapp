@@ -13,10 +13,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { CheckCircle2, Send } from '@/components/ui/icons';
 import { makeStyles, useBrand } from '@/lib/app-theme';
-import { heavyHaptic, successHaptic, tapHaptic } from '@/lib/haptics';
+import { heavyHaptic, successHaptic } from '@/lib/haptics';
+import { SPRING_SETTLE, SPRING_TACTILE } from '@/lib/motion';
 
-const PRESS_SPRING = { damping: 15, stiffness: 300 };
-const CHECK_SPRING = { damping: 12, stiffness: 220 };
+// Critically damped (see motionTokens): the check settles once, with no wobble.
+const PRESS_SPRING = SPRING_TACTILE;
+const CHECK_SPRING = SPRING_SETTLE;
 const RING_MS = 500;
 /** Pause on the finished check before moving on, so the change is seen. */
 const HOLD_MS = 650;
@@ -112,7 +114,6 @@ export function ConfirmButton({ label, busyLabel, doneLabel, price, disabled, on
       <Pressable
         onPressIn={() => {
           if (state !== 'idle' || disabled) return;
-          tapHaptic();
           press.set(1);
         }}
         onPressOut={() => press.set(withSpring(1, PRESS_SPRING))}

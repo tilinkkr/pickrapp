@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
 import { AnimatedTruckCard } from '@/components/AnimatedTruckCard';
@@ -16,6 +16,7 @@ import { getCategory, pick, type VehicleId } from '@/lib/catalog';
 import { choiceHaptic, tapHaptic } from '@/lib/haptics';
 import { useSession } from '@/lib/session';
 import { formatRupees } from '@/lib/trip-format';
+import { enterAt } from '@/lib/motion';
 
 /**
  * Step 4 of 5 (handoff C08), ride-app style: the route on a (demo) map, the
@@ -83,7 +84,7 @@ export default function TruckStep() {
         {shown.map((quote, i) => (
           <Animated.View
             key={quote.vehicle.id}
-            entering={i === 0 ? undefined : FadeInDown.delay(i * 50).duration(240)}
+            entering={i === 0 ? undefined : enterAt(0, i * 50)}
             layout={LinearTransition}>
             <AnimatedTruckCard
               quote={quote}

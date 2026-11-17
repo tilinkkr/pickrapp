@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
@@ -10,7 +10,7 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { choiceHaptic, selectionHaptic } from '@/lib/haptics';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { type PayMethod, useSession } from '@/lib/session';
 
 const METHODS: { value: PayMethod; icon: LucideIcon; label: StringKey; note: StringKey }[] = [
@@ -39,7 +39,7 @@ export default function PaymentScreen() {
 
   return (
     <ProfilePage title={t('payments')} action={{ icon: CircleHelp, label: t('help'), onPress: () => router.push('/profile/help') }}>
-      <Animated.View entering={FadeInDown.duration(260)}>
+      <Animated.View entering={enterAt()}>
         <PressableScale
           onPress={() => {
             choiceHaptic();
@@ -61,7 +61,7 @@ export default function PaymentScreen() {
         </PressableScale>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(STAGGER_MS).duration(260)}>
+      <Animated.View entering={enterAt(0, STAGGER_MS)}>
         <Text style={styles.section}>{t('payWith')}</Text>
         <View style={styles.group} accessibilityRole="radiogroup">
           {METHODS.map((m, i) => {
@@ -91,7 +91,7 @@ export default function PaymentScreen() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(260)}>
+      <Animated.View entering={enterAt(0, STAGGER_MS * 2)}>
         <Text style={styles.section}>{t('faqs')}</Text>
         <View style={styles.faqs}>
           {FAQS.map((f, i) => (

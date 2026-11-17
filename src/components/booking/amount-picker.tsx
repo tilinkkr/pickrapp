@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ArrowRight } from '@/components/ui/icons';
 import { PressableScale } from '@/components/ui/pressable-scale';
@@ -9,6 +9,7 @@ import { quantityText } from '@/lib/booking-format';
 import { type Measure, QUANTITY } from '@/lib/catalog';
 import { selectionHaptic } from '@/lib/haptics';
 import { useSession } from '@/lib/session';
+import { enterAt } from '@/lib/motion';
 
 /** The three amounts people order most, per measure: one tap jumps the wheel there. */
 const PRESETS: Record<Measure, number[]> = {
@@ -62,7 +63,7 @@ export function AmountPicker({ measure, value, title, onChange, onDone }: Amount
   }
 
   return (
-    <Animated.View entering={FadeInDown.duration(240)} style={styles.wrap}>
+    <Animated.View entering={enterAt()} style={styles.wrap}>
       <View style={styles.head}>
         <Text style={styles.title} numberOfLines={1}>
           {title}

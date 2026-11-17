@@ -1,15 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Share, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  FadeInDown,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { GlassCard, GlassCell, GlassRow } from '@/components/ui/glass';
 import { Home, Share2 } from '@/components/ui/icons';
@@ -17,15 +9,13 @@ import { IconChip } from '@/components/ui/m-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles } from '@/lib/app-theme';
 import { tripFare } from '@/lib/fare';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { formatRupees, formatWhen } from '@/lib/trip-format';
 import type { Trip } from '@/lib/trips';
 
 const rise = (row: number) =>
-  FadeInDown.duration(320)
-    .easing(Easing.out(Easing.cubic))
-    .delay(row * STAGGER_MS * 1.5);
+  enterAt(0, row * STAGGER_MS * 1.5);
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 /** Paper is always paper: white with dark ink, in light and dark mode alike. */
 const PAPER = '#FFFFFF';

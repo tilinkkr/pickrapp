@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
@@ -13,8 +13,9 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { passReady, useBooking } from '@/lib/booking';
-import { selectionHaptic, successHaptic } from '@/lib/haptics';
+import { selectionHaptic } from '@/lib/haptics';
 import { useSession } from '@/lib/session';
+import { enterAt } from '@/lib/motion';
 
 const MIN_PASS = 6;
 /** DEMO: no upload service yet; the photo stays on the phone and this bar stands in for the upload. */
@@ -40,7 +41,7 @@ export default function PassStep() {
 
   function finishUpload() {
     setUploading(false);
-    successHaptic();
+    selectionHaptic();
   }
 
   async function pick(source: 'camera' | 'library') {
@@ -73,14 +74,14 @@ export default function PassStep() {
       title={t('truckPass')}
       step={5}
       footer={<PrimaryButton label={t('continueToReview')} disabled={!ready} onPress={() => router.push('/book/review')} />}>
-      <Animated.View entering={FadeInDown.duration(260)}>
+      <Animated.View entering={enterAt()}>
         <Text style={styles.h1} accessibilityRole="header">
           {t('passTitle')}
         </Text>
         <Text style={styles.sub}>{t('passSub')}</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(60).duration(260)} style={styles.card}>
+      <Animated.View entering={enterAt(0, 60)} style={styles.card}>
         <Text style={styles.label}>{t('passNumber')}</Text>
         <View style={[styles.field, numberOk && styles.fieldOk]}>
           <MIcon name="file-document-outline" size={22} color={numberOk ? Brand.link : Brand.muted} />
@@ -98,7 +99,7 @@ export default function PassStep() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(120).duration(260)} style={styles.card}>
+      <Animated.View entering={enterAt(0, 120)} style={styles.card}>
         <Text style={styles.label}>{t('passPhoto')}</Text>
         {draft.transitPassPhoto ? (
           <Animated.View entering={FadeIn.duration(200)} style={styles.preview}>

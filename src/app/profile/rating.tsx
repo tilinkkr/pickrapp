@@ -1,11 +1,11 @@
 import { Image } from 'expo-image';
 import { Text, View } from 'react-native';
-import Animated, { FadeInDown, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { Clock, Handshake, type LucideIcon, ShieldCheck, Star, UserRoundCheck } from '@/components/ui/icons';
 import { makeStyles, useBrand } from '@/lib/app-theme';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { demoRating } from '@/lib/rating';
 import { useSession } from '@/lib/session';
 import { useTrips } from '@/lib/trips';
@@ -51,11 +51,11 @@ export default function RatingScreen() {
           </View>
         </Animated.View>
       }>
-      <Animated.View entering={FadeInDown.duration(280)}>
+      <Animated.View entering={enterAt()}>
         <Image source={HERO} style={styles.hero} contentFit="cover" accessibilityIgnoresInvertColors />
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(STAGGER_MS).duration(280)} style={styles.center}>
+      <Animated.View entering={enterAt(0, STAGGER_MS)} style={styles.center}>
         <Text style={styles.big} accessibilityRole="header">
           {rating.toFixed(2)}
         </Text>
@@ -68,7 +68,7 @@ export default function RatingScreen() {
         <Text style={styles.demo}>{t('ratingDemo')}</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(280)} style={styles.how}>
+      <Animated.View entering={enterAt(0, STAGGER_MS * 2)} style={styles.how}>
         <Text style={styles.howTitle}>{t('ratingHowTitle')}</Text>
         <Text style={styles.howBody}>{t('ratingHowBody')}</Text>
       </Animated.View>
@@ -77,7 +77,7 @@ export default function RatingScreen() {
         <Text style={styles.section}>{t('understandRatings')}</Text>
         <View style={styles.grid}>
           {tiles.map((tile, i) => (
-            <Animated.View key={tile.title} entering={FadeInDown.delay(STAGGER_MS * (3 + i)).springify().damping(18)} style={styles.tile}>
+            <Animated.View key={tile.title} entering={enterAt(0, STAGGER_MS * (3 + i))} style={styles.tile}>
               <View style={styles.tileIcon}>
                 <tile.icon size={22} color={Brand.link} strokeWidth={2.25} />
               </View>

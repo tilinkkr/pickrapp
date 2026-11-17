@@ -128,4 +128,41 @@ Visual style, colours and layout are free choices. Function, rules and flow are 
 - **Loads tab:** the month's numbers are one three-cell grid; "All" is split into Ongoing and Past sections.
 - **Home location header:** tapping it asks for location access (or opens Settings) and refreshes the place. It no longer starts a booking.
 
+## Decisions agreed 2026-11-17 (override earlier bullets where they conflict)
+
+- **Motion system** (`src/theme/motionTokens.ts`, re-exported from `src/lib/motion.ts`):
+  - Curves from Uber Base: `CURVE.decelerate` for arrivals, `CURVE.accelerate` for exits, `CURVE.standard` for moves across the screen.
+  - `DURATION` tokens of 100–400 ms, following Swiggy's 100–300 ms mobile range.
+  - Swiggy's choreography: what leaves goes first and fastest, and children follow their parent.
+  - Every spring is critically damped (`dampingRatio: 1`). Never pass `damping` alone and never `.springify()` an entrance: Reanimated 4's defaults (mass 4, stiffness 900) make that wobble four or five times.
+  - Use `enterAt(index, delay)` (fade plus an 8 px rise), `fadeAt`, `popIn` and `ruleIn`, never raw `FadeInDown` (25 px).
+  - On web the helpers fall back to stock presets. Reanimated web pins custom entrances as absolute boxes once they end, which breaks reflow.
+- **Grids load as one piece** (`GlassCard index`):
+  - The card rises at `cardDelay(index)`.
+  - Its rows fade in 40 ms apart.
+  - Each divider (`GlassRule`) rules itself in from its start edge.
+  - Live updates never replay it.
+- **Haptics:**
+  - Android uses the system haptics engine (`performAndroidHapticsAsync`). The vibration-motor calls felt like the phone shaking.
+  - Taps and choices share the lightest tick.
+  - Only results are felt: booking sent, driver found, work done, paid, no truck.
+  - Auto-advance, stage changes and ETA updates are seen, not felt.
+- **Calm search map:** nothing bobs, pans or orbits. It has two slow rings, near-still trucks lighting up in turn, and no-overshoot badges.
+- **Map picker** (`/book/map`, C05):
+  - The pin lifts 14 px while the map moves (a dot marks the exact point), settles on the standard curve with one landing ring, and a "Pickup here" label rises back in.
+  - The address card holds a fixed height and shows skeleton bars while resolving. Answers for old pin positions are dropped.
+  - Android needs location permission to geocode, so "Allow" is offered inline and the pin is kept either way.
+  - GPS gives up after 12 s and never re-centres once the customer has moved the map.
+  - A saved site within 60 m is offered ("Use").
+  - Web gets a pannable demo map tagged "Demo map".
+- **Service area** (rule 1, DEMO): a Kerala outline in `src/lib/service-area.ts` until the server sends admin areas.
+  - The map shows inside/outside on every pin and blocks Confirm outside, with "Go to Thrissur" to recover.
+  - "Current location" refuses a GPS fix outside the area.
+- **Booking for someone else** (Uber's rider switch, Porter's receiver details):
+  - A "For me ▾" chip sits on the route step, and Review has a row with a pencil.
+  - The sheet offers Me, recent people (`pickr.people`, last five, phone only) or someone new: name, 10-digit mobile, where they meet the truck (Drop, Pickup or Both) and who pays the driver (I pay or They pay).
+  - The person is saved as `trip.forOther`. Live pages show a "Booked for" grid with Call and Share trip, and the details sheet, searching card, payment and loads card name them.
+  - "Share trip" opens the phone's share sheet; Pickr sends no message. The start PIN is included only when they meet the truck at pickup.
+  - Payment is still direct to the driver either way. The sheet says the number goes to the driver for this trip only (DPDP).
+
 @docs/UI_UX_DESIGNER_HANDOFF.md

@@ -16,12 +16,12 @@ import { shortVehicleName } from '@/lib/booking-format';
 import { pick, type TruckQuote } from '@/lib/catalog';
 import type { Language } from '@/lib/i18n';
 import { formatRupees } from '@/lib/trip-format';
-import { HapticsEngine, MORPH, SPRING_BOUNCY } from '@/theme/motionTokens';
+import { CURVE, DURATION, MORPH, SPRING_SETTLE, SPRING_TACTILE } from '@/theme/motionTokens';
 
 const VEHICLE_TINT: [string, string] = ['#CBD2DA', '#6B7480'];
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const PRESS_SPRING = { stiffness: 400, damping: 22 };
+const PRESS_SPRING = SPRING_TACTILE;
 
 type AnimatedTruckCardProps = {
   quote: TruckQuote;
@@ -70,15 +70,10 @@ export function AnimatedTruckCard({ quote, language, selected, badge, tripsLabel
 
   useEffect(() => {
     on.set(withTiming(selected ? 1 : 0, MORPH));
-    check.set(selected ? withSpring(1, SPRING_BOUNCY) : withTiming(0, { duration: 120 }));
+    check.set(selected ? withSpring(1, SPRING_SETTLE) : withTiming(0, { duration: 120 }));
     if (selected) {
-      // Park instantly behind the curtain, then drive in and overshoot to ~1.06.
-      drive.set(
-        withSequence(
-          withTiming(0, { duration: 16 }),
-          withSpring(1, { damping: 12, stiffness: 260, mass: 0.9 })
-        )
-      );
+      // Park instantly behind the curtain, then glide forward into place once (no overshoot).
+      drive.set(withSequence(withTiming(0, { duration: 16 }), withTiming(1, { duration: DURATION.page, easing: CURVE.decelerate })));
     } else {
       drive.set(withTiming(0, MORPH));
     }
@@ -103,10 +98,7 @@ export function AnimatedTruckCard({ quote, language, selected, badge, tripsLabel
   return (
     <AnimatedPressable
       onPress={onPress}
-      onPressIn={() => {
-        HapticsEngine.light();
-        press.set(1);
-      }}
+      onPressIn={() => press.set(1)}
       onPressOut={() => press.set(withSpring(1, PRESS_SPRING))}
       accessibilityRole="radio"
       accessibilityState={{ selected }}

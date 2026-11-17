@@ -12,9 +12,9 @@ import { IconChip, STAGE_ICON } from '@/components/ui/m-icon';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { makeStyles, useAppTheme, useBrand } from '@/lib/app-theme';
 import { freeSecondsLeft } from '@/lib/fare';
+import { enterAt } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { placeName, useNow } from '@/lib/trip-format';
-import { screenZoomIn } from '@/lib/transitions';
 import { type Trip, useTrips } from '@/lib/trips';
 
 /** Height of the live bar; tab screens add it to their bottom padding while a trip is active. */
@@ -73,7 +73,7 @@ function Bar({ trip }: { trip: Trip }) {
 
   return (
     <Animated.View
-      entering={screenZoomIn}
+      entering={enterAt(0, 120)}
       pointerEvents="box-none"
       style={[styles.wrap, { bottom: insets.bottom + TAB_BAR_HEIGHT + TAB_BAR_GAP + LIVE_BAR_GAP }]}>
       <PressableScale

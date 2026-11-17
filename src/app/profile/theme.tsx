@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { Check, type LucideIcon, Moon, Sun, SunMoon } from '@/components/ui/icons';
@@ -7,7 +7,7 @@ import { DarkBrand, makeStyles, type ThemePreference, useAppTheme, useBrand } fr
 import { Brand as LightBrand, type Palette } from '@/constants/theme';
 import { selectionHaptic } from '@/lib/haptics';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 
 const OPTIONS: { value: ThemePreference; icon: LucideIcon; label: StringKey }[] = [
@@ -30,7 +30,7 @@ export default function ThemeScreen() {
           const selected = o.value === preference;
           const palette = o.value === 'dark' || (o.value === 'system' && dark) ? DarkBrand : LightBrand;
           return (
-            <Animated.View key={o.value} entering={FadeInDown.delay(i * STAGGER_MS).springify().damping(18)} style={styles.cell}>
+            <Animated.View key={o.value} entering={enterAt(0, i * STAGGER_MS)} style={styles.cell}>
               <Pressable
                 onPress={() => {
                   if (selected) return;

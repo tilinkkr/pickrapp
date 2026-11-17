@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useRef } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeOut } from 'react-native-reanimated';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
 import { SchedulePicker } from '@/components/booking/schedule-picker';
@@ -10,10 +10,11 @@ import { IconChip, type MIconName } from '@/components/ui/m-icon';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { useBooking } from '@/lib/booking';
-import { choiceHaptic, successHaptic } from '@/lib/haptics';
+import { choiceHaptic } from '@/lib/haptics';
 import { asapBlockedUntil, checkSchedule, DEFAULT_SCHEDULE, type ScheduleInput } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { formatWhen, useNow } from '@/lib/trip-format';
+import { enterAt } from '@/lib/motion';
 
 /** Long enough to see the choice land before the next step slides in. */
 const ADVANCE_MS = 420;
@@ -39,7 +40,6 @@ export default function WhenStep() {
   function advance() {
     if (leaving.current) return;
     leaving.current = true;
-    successHaptic();
     setTimeout(() => {
       leaving.current = false;
       router.push('/book/truck');
@@ -83,7 +83,7 @@ export default function WhenStep() {
       </View>
 
       {scheduling && (
-        <Animated.View entering={FadeInDown.duration(260)} exiting={FadeOut.duration(120)} style={styles.picker}>
+        <Animated.View entering={enterAt()} exiting={FadeOut.duration(120)} style={styles.picker}>
           <SchedulePicker
             value={schedule}
             now={now}

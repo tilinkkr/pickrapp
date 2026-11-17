@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { ScreenTitle, TabScreen } from '@/components/tab-screen';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -9,7 +9,7 @@ import { IndianRupee, type LucideIcon, Navigation, Truck } from '@/components/ui
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { selectionHaptic } from '@/lib/haptics';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { formatRupees } from '@/lib/trip-format';
 import { isActive, isPast, type Trip, useTrips } from '@/lib/trips';
@@ -97,7 +97,7 @@ export default function LoadsScreen() {
                 </View>
               )}
               {section.trips.map((trip, i) => (
-                <Animated.View key={trip.id} entering={FadeInDown.duration(280).delay(i * STAGGER_MS * 1.5)} layout={LinearTransition.duration(200)}>
+                <Animated.View key={trip.id} entering={enterAt(0, i * STAGGER_MS * 1.5)} layout={LinearTransition.duration(200)}>
                   <TripCard trip={trip} />
                 </Animated.View>
               ))}

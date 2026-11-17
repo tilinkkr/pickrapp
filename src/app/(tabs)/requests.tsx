@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
-import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ScreenTitle, TabScreen } from '@/components/tab-screen';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -9,7 +9,7 @@ import { IconChip, type MIconName } from '@/components/ui/m-icon';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { selectionHaptic } from '@/lib/haptics';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { formatDay, formatTime } from '@/lib/trip-format';
 import { type Trip, useTrips } from '@/lib/trips';
@@ -84,7 +84,7 @@ function RequestRow({ trip, index, last }: { trip: Trip; index: number; last: bo
   const failed = isFailed(trip);
 
   return (
-    <Animated.View entering={FadeInDown.duration(260).easing(Easing.out(Easing.cubic)).delay(index * STAGGER_MS)}>
+    <Animated.View entering={enterAt(0, index * STAGGER_MS)}>
       <PressableScale
         onPress={() => {
           selectionHaptic();

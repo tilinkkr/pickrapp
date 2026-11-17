@@ -1,49 +1,50 @@
-import { Easing, withDelay, withSpring, withTiming } from 'react-native-reanimated';
+import { withDelay, withTiming } from 'react-native-reanimated';
 
-import { SPRING_SHEET } from '@/lib/motion';
+import { CURVE, DURATION } from '@/lib/motion';
 
 /**
- * Modern layout transitions, as custom Reanimated worklets.
- *
- * Stage pages use a shared-axis X transition (Material motion): the old page
- * drifts left, shrinks a touch and fades while the new one springs in from
- * the right. Each trip stage reads as its own page, not a growing column.
+ * Screen-level transitions, as custom Reanimated worklets. Timing curves, not
+ * springs, so nothing overshoots: arrivals use Uber Base's decelerate curve,
+ * departures its accelerate curve, and the outgoing page leaves first and
+ * faster than the incoming one arrives (Swiggy's choreography rule).
  */
-const SHIFT = 56;
+const SHIFT = 32;
 
+/** A stage page arriving: drifts in from the right and fades up, a beat after the old one starts leaving. */
 export function pageIn() {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ translateX: SHIFT }, { scale: 0.96 }] },
+    initialValues: { opacity: 0, transform: [{ translateX: SHIFT }] },
     animations: {
-      opacity: withDelay(90, withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) })),
-      transform: [{ translateX: withDelay(60, withSpring(0, SPRING_SHEET)) }, { scale: withDelay(60, withSpring(1, SPRING_SHEET)) }],
+      opacity: withDelay(60, withTiming(1, { duration: DURATION.card, easing: CURVE.decelerate })),
+      transform: [{ translateX: withDelay(60, withTiming(0, { duration: DURATION.page, easing: CURVE.decelerate })) }],
     },
   };
 }
 
+/** A stage page leaving: slides a little left and fades, fast. */
 export function pageOut() {
   'worklet';
   return {
-    initialValues: { opacity: 1, transform: [{ translateX: 0 }, { scale: 1 }] },
+    initialValues: { opacity: 1, transform: [{ translateX: 0 }] },
     animations: {
-      opacity: withTiming(0, { duration: 160, easing: Easing.in(Easing.quad) }),
-      transform: [
-        { translateX: withTiming(-SHIFT * 0.6, { duration: 200, easing: Easing.in(Easing.quad) }) },
-        { scale: withTiming(0.96, { duration: 200 }) },
-      ],
+      opacity: withTiming(0, { duration: DURATION.exit, easing: CURVE.accelerate }),
+      transform: [{ translateX: withTiming(-SHIFT * 0.5, { duration: DURATION.exit, easing: CURVE.accelerate }) }],
     },
   };
 }
 
-/** A whole screen zooming up out of the live bar above the tab bar. */
+/** A whole screen rising out of the live bar above the tab bar and settling without a bounce. */
 export function screenZoomIn() {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ translateY: 140 }, { scale: 0.86 }] },
+    initialValues: { opacity: 0, transform: [{ translateY: 96 }, { scale: 0.92 }] },
     animations: {
-      opacity: withTiming(1, { duration: 200 }),
-      transform: [{ translateY: withSpring(0, SPRING_SHEET) }, { scale: withSpring(1, SPRING_SHEET) }],
+      opacity: withTiming(1, { duration: DURATION.small, easing: CURVE.decelerate }),
+      transform: [
+        { translateY: withTiming(0, { duration: DURATION.sheet, easing: CURVE.decelerate }) },
+        { scale: withTiming(1, { duration: DURATION.sheet, easing: CURVE.decelerate }) },
+      ],
     },
   };
 }

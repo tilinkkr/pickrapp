@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import type { OtherPerson } from './people';
 import { applyEvent, type TripEvent } from './trip-machine';
 
 /** Trip stages from the handoff's permission matrix (section 9). */
@@ -85,6 +86,8 @@ export type Trip = {
   /** Load photos the driver added before leaving pickup (C10); DEMO entries name catalogue images. */
   loadPhotos?: string[];
   photosSkipped?: boolean;
+  /** Booked for someone else: who meets the truck, where, and who pays the driver. */
+  forOther?: OtherPerson;
 };
 
 /** Pilot server statuses (shared with the driver app) for each stage of this app. */

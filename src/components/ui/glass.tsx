@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react';
+import { Children, createContext, isValidElement, type ReactNode, useContext } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { MIcon, type MIconName } from '@/components/ui/m-icon';
 import { makeStyles, useBrand } from '@/lib/app-theme';
+import { enterAt, fadeAt, ruleIn, STAGGER_MS } from '@/lib/motion';
 
 /**
  * The app's grid: one outlined card, rows and cells split by 1 px lines that
@@ -11,18 +13,77 @@ import { makeStyles, useBrand } from '@/lib/app-theme';
  *
  * Solid surfaces only (2026-11-14): white card on a white page, or the
  * `accent` tone (orange outline, pale orange fill) for the one grid on a
- * page that matters most. No blur and no orange-to-white washes. The file
- * and export names are kept from the earlier glass version.
+ * page that matters most. The file and export names are kept from the
+ * earlier glass version.
+ *
+ * How a grid loads (2026-11-17), as one piece of choreography:
+ * 1. the card fades in and rises 8 px, in page order (`index`), 60 ms after
+ *    the card above it;
+ * 2. its rows fade in one after another, 40 ms apart, riding on the card's
+ *    entrance (Swiggy's "children follow the parent");
+ * 3. each dividing line rules itself in from its start edge as its row
+ *    arrives, like lines drawn in a ledger.
+ * Opacity and transform only, on the Base decelerate curve, so nothing
+ * moves the layout and nothing overshoots. It plays once, when the grid
+ * mounts; live updates inside it never replay it.
  */
-export function GlassCard({ children, accent }: { children: ReactNode; accent?: boolean }) {
+
+/** When a card in page order starts to arrive. */
+export const cardDelay = (index: number) => 40 + index * 60;
+
+type RowTiming = { index: number; base: number; animate: boolean };
+const RowContext = createContext<RowTiming>({ index: 0, base: 0, animate: false });
+
+type GlassCardProps = {
+  children: ReactNode;
+  accent?: boolean;
+  /** Position on the page; the card then makes its own entrance, `cardDelay(index)` after the page opens. */
+  index?: number;
+  /** Turn the row cascade off (e.g. a grid that is rebuilt on every tick). */
+  still?: boolean;
+};
+
+export function GlassCard({ children, accent, index, still }: GlassCardProps) {
   const styles = useStyles();
-  return <View style={[styles.card, accent && styles.cardAccent]}>{children}</View>;
+  const base = (index !== undefined ? cardDelay(index) : 0) + 60;
+  const rows = Children.toArray(children).filter(isValidElement);
+  return (
+    <Animated.View entering={index !== undefined && !still ? enterAt(0, cardDelay(index)) : undefined} style={[styles.card, accent && styles.cardAccent]}>
+      {rows.map((row, i) => (
+        <RowContext.Provider key={row.key ?? i} value={{ index: i, base, animate: !still }}>
+          <Animated.View entering={still ? undefined : fadeAt(i, base)}>{row}</Animated.View>
+        </RowContext.Provider>
+      ))}
+    </Animated.View>
+  );
+}
+
+/**
+ * A 1 px line on the row's top edge (`x`) or the cell's left edge (`y`) that
+ * rules itself in as the row arrives. Exported for custom rows inside a
+ * GlassCard (choice lists), so every divider in the app draws the same way.
+ */
+export function GlassRule({ axis = 'x' }: { axis?: 'x' | 'y' }) {
+  const styles = useStyles();
+  const { index, base, animate } = useContext(RowContext);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      entering={animate ? ruleIn(index, base + STAGGER_MS, axis) : undefined}
+      style={axis === 'x' ? styles.ruleTop : styles.ruleLeft}
+    />
+  );
 }
 
 /** A row of equal cells. `divided` draws the line above it (every row after the first). */
 export function GlassRow({ children, divided = true }: { children: ReactNode; divided?: boolean }) {
   const styles = useStyles();
-  return <View style={[styles.row, divided && styles.lineTop]}>{children}</View>;
+  return (
+    <View style={styles.row}>
+      {children}
+      {divided && <GlassRule />}
+    </View>
+  );
 }
 
 type GlassCellProps = {
@@ -48,6 +109,7 @@ export function GlassCell({ icon, value, label, warn, divided, onPress }: GlassC
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
+      {divided && <GlassRule axis="y" />}
     </>
   );
   return onPress ? (
@@ -55,11 +117,11 @@ export function GlassCell({ icon, value, label, warn, divided, onPress }: GlassC
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value}`}
-      style={({ pressed }) => [styles.cell, divided && styles.lineLeft, pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.cell, pressed && styles.pressed]}>
       {body}
     </Pressable>
   ) : (
-    <View accessible accessibilityLabel={`${label}: ${value}`} style={[styles.cell, divided && styles.lineLeft]}>
+    <View accessible accessibilityLabel={`${label}: ${value}`} style={styles.cell}>
       {body}
     </View>
   );
@@ -79,7 +141,7 @@ export function InfoRow({ icon, label, value, divided, trailing }: InfoRowProps)
   const Brand = useBrand();
   const styles = useStyles();
   return (
-    <View style={[styles.info, divided && styles.lineTop]}>
+    <View style={styles.info}>
       <View style={styles.iconCol}>
         <MIcon name={icon} size={22} color={Brand.primary} />
       </View>
@@ -88,6 +150,7 @@ export function InfoRow({ icon, label, value, divided, trailing }: InfoRowProps)
         <Text style={styles.infoValue}>{value}</Text>
       </View>
       {trailing}
+      {divided && <GlassRule />}
     </View>
   );
 }
@@ -106,11 +169,12 @@ export function ActionCell({ icon, label, onPress, danger, disabled, divided, hi
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={hint}
-      style={({ pressed }) => [styles.action, divided && styles.lineLeft, pressed && styles.pressed, disabled && styles.disabled]}>
+      style={({ pressed }) => [styles.action, pressed && styles.pressed, disabled && styles.disabled]}>
       <MIcon name={icon} size={20} color={color} />
       <Text style={[styles.actionText, { color }]} numberOfLines={1}>
         {label}
       </Text>
+      {divided && <GlassRule axis="y" />}
     </Pressable>
   );
 }
@@ -133,13 +197,24 @@ const useStyles = makeStyles((Brand) => ({
   row: {
     flexDirection: 'row',
   },
-  lineTop: {
-    borderTopWidth: 1,
-    borderTopColor: Brand.border,
+  // The dividing lines: drawn on top of the row so they reach the card edge, and grow from their start edge.
+  ruleTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: Brand.border,
+    transformOrigin: 'left',
   },
-  lineLeft: {
-    borderLeftWidth: 1,
-    borderLeftColor: Brand.border,
+  ruleLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 1,
+    backgroundColor: Brand.border,
+    transformOrigin: 'top',
   },
   pressed: {
     backgroundColor: Brand.surface,

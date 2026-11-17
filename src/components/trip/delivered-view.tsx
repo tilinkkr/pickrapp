@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeInDown,
   type SharedValue,
   useAnimatedStyle,
   useReducedMotion,
@@ -16,12 +15,13 @@ import { IconChip, MIcon, type MIconName } from '@/components/ui/m-icon';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { tripFare } from '@/lib/fare';
 import { selectionHaptic } from '@/lib/haptics';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
+import { firstName } from '@/lib/people';
 import { type PayMethod, useSession } from '@/lib/session';
 import { formatRupees } from '@/lib/trip-format';
 import { type Trip, useTrips } from '@/lib/trips';
 
-const rise = (row: number) => FadeInDown.duration(320).easing(Easing.out(Easing.cubic)).delay(row * STAGGER_MS * 1.5);
+const rise = (row: number) => enterAt(0, row * STAGGER_MS * 1.5);
 
 const METHODS: { value: PayMethod; icon: MIconName; label: 'payGpay' | 'payWhatsapp' | 'payCash' }[] = [
   { value: 'gpay', icon: 'google', label: 'payGpay' },
@@ -64,7 +64,9 @@ export function DeliveredView({ trip }: { trip: Trip }) {
       <Animated.View entering={rise(1)} style={styles.block}>
         <GlassCard>
           <View style={styles.amountBox}>
-            <Text style={styles.amountLabel}>{t('payDriverShort', { name: driver })}</Text>
+            <Text style={styles.amountLabel}>
+              {trip.forOther?.pays === 'them' ? t('theyPayDriver', { name: firstName(trip.forOther.name) }) : t('payDriverShort', { name: driver })}
+            </Text>
             <Text style={styles.amount}>₹{formatRupees(amount)}</Text>
             {waiting > 0 && <Text style={styles.amountNote}>{t('includesWaiting', { amount: formatRupees(waiting) })}</Text>}
           </View>

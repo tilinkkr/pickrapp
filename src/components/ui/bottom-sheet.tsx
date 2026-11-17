@@ -1,11 +1,12 @@
 import type { PropsWithChildren } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, SlideInDown } from 'react-native-reanimated';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { X } from '@/components/ui/icons';
 import { useSheetDepth } from '@/components/ui/sheet-depth';
 import { makeStyles, useBrand } from '@/lib/app-theme';
+import { CURVE, DURATION } from '@/lib/motion';
 
 type BottomSheetProps = PropsWithChildren<{
   visible: boolean;
@@ -14,7 +15,11 @@ type BottomSheetProps = PropsWithChildren<{
   onClose: () => void;
 }>;
 
-/** Solid sheet that slides up over a dimmed screen (no blur, so text stays sharp outdoors). */
+/**
+ * Solid sheet that slides up over a dimmed screen (no blur, so text stays
+ * sharp outdoors). It arrives on the Base decelerate curve with no spring, and
+ * it rides up with the keyboard so a field inside it is never covered.
+ */
 export function BottomSheet({ visible, title, closeLabel, onClose, children }: BottomSheetProps) {
   const Brand = useBrand();
   const styles = useStyles();
@@ -24,26 +29,28 @@ export function BottomSheet({ visible, title, closeLabel, onClose, children }: B
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={closeLabel} />
-      <Animated.View
-        entering={SlideInDown.duration(260).easing(Easing.out(Easing.cubic))}
-        style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}
-        accessibilityViewIsModal>
-        <View style={styles.grabber} />
-        <View style={styles.header}>
-          <Text style={styles.title} accessibilityRole="header">
-            {title}
-          </Text>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={closeLabel}
-            hitSlop={8}
-            style={styles.close}>
-            <X size={22} color={Brand.text} strokeWidth={2} />
-          </Pressable>
-        </View>
-        {children}
-      </Animated.View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.dock} pointerEvents="box-none">
+        <Animated.View
+          entering={SlideInDown.duration(DURATION.sheet - 60).easing(CURVE.decelerate)}
+          style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}
+          accessibilityViewIsModal>
+          <View style={styles.grabber} />
+          <View style={styles.header}>
+            <Text style={styles.title} accessibilityRole="header">
+              {title}
+            </Text>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={closeLabel}
+              hitSlop={8}
+              style={styles.close}>
+              <X size={22} color={Brand.text} strokeWidth={2} />
+            </Pressable>
+          </View>
+          {children}
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -53,11 +60,12 @@ const useStyles = makeStyles((Brand) => ({
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(24, 17, 20, 0.45)',
   },
+  dock: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'flex-end',
+  },
   sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    maxHeight: '92%',
     paddingHorizontal: 24,
     paddingTop: 10,
     borderTopLeftRadius: 24,
@@ -78,6 +86,7 @@ const useStyles = makeStyles((Brand) => ({
     justifyContent: 'space-between',
   },
   title: {
+    flex: 1,
     fontSize: 20,
     fontWeight: '700',
     color: Brand.text,

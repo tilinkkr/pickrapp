@@ -52,6 +52,14 @@ export function TripCard({ trip }: { trip: Trip }) {
           <Text style={styles.sub} numberOfLines={1}>
             {shortVehicleName(trip.vehicle)} · {trip.code}
           </Text>
+          {trip.forOther && (
+            <View style={styles.forRow}>
+              <MIcon name="account-arrow-right-outline" size={14} color={Brand.link} />
+              <Text style={styles.forText} numberOfLines={1}>
+                {t('forName', { name: trip.forOther.name })}
+              </Text>
+            </View>
+          )}
         </View>
         {amount && <Text style={styles.amount}>{amount}</Text>}
       </View>
@@ -119,6 +127,18 @@ const useStyles = makeStyles((Brand) => ({
     fontSize: 12,
     fontWeight: '600',
     color: Brand.muted,
+  },
+  forRow: {
+    marginTop: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  forText: {
+    flexShrink: 1,
+    fontSize: 12,
+    fontWeight: '800',
+    color: Brand.link,
   },
   amount: {
     fontSize: 17,

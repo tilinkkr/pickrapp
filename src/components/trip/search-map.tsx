@@ -10,14 +10,13 @@ import Animated, {
   useSharedValue,
   withDelay,
   withRepeat,
-  withSpring,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 
 import { MapArt } from '@/components/maps/map-art';
 import { Check, MapPin, ShieldCheck, Truck } from '@/components/ui/icons';
 import { makeStyles, useBrand } from '@/lib/app-theme';
+import { CURVE, DURATION, popIn } from '@/lib/motion';
 
 /** Nearby trucks, as fractions of the shorter side from the pin and an angle in degrees. */
 const TRUCKS = [
@@ -42,10 +41,10 @@ type SearchMapProps = {
 };
 
 /**
- * Searching hero (C12), ride-app style: the pickup pin breathes on a quiet
- * map while ripples spread from it, nearby trucks drift on slow loops and
- * light up one after another as they are contacted. Every motion is a
- * looped transform or opacity, so it stays smooth for the whole search.
+ * Searching hero (C12), ride-app style and calm: the map holds still, two
+ * slow rings spread from the pickup pin, and nearby trucks sit almost still
+ * on their own small loops, each lighting up in turn as it is contacted.
+ * Nothing bobs, pans or orbits (2026-11-17): only opacity and a slow ring.
  * The trucks are illustrative, not real positions.
  */
 export function SearchMap({ intro = false, found = false, foundLabel }: SearchMapProps) {
@@ -55,8 +54,6 @@ export function SearchMap({ intro = false, found = false, foundLabel }: SearchMa
   const [introDone, setIntroDone] = useState(!intro);
   const drift = useSharedValue(0);
   const ping = useSharedValue(0);
-  const bob = useSharedValue(0);
-  const pan = useSharedValue(0);
   // Reduced motion: keep the pin and the trucks still; only the status text changes.
   const reduceMotion = useReducedMotion();
 
@@ -64,24 +61,13 @@ export function SearchMap({ intro = false, found = false, foundLabel }: SearchMa
     if (reduceMotion) return;
     drift.set(withRepeat(withTiming(1, { duration: DRIFT_MS, easing: Easing.linear }), -1));
     ping.set(withRepeat(withTiming(TRUCKS.length, { duration: PING_STEP_MS * TRUCKS.length, easing: Easing.linear }), -1));
-    bob.set(withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) }), -1, true));
-    pan.set(withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [drift, ping, bob, pan, reduceMotion]);
+  }, [drift, ping, reduceMotion]);
 
   useEffect(() => {
     if (!intro) return;
     const timer = setTimeout(() => setIntroDone(true), INTRO_MS);
     return () => clearTimeout(timer);
   }, [intro]);
-
-  const panStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1.08 }, { translateX: (pan.value - 0.5) * 10 }, { translateY: (0.5 - pan.value) * 6 }],
-  }));
-  const pinStyle = useAnimatedStyle(() => ({ transform: [{ translateY: 0 }] }));
-  const shadowStyle = useAnimatedStyle(() => ({
-    opacity: 0.35 - bob.value * 0.15,
-    transform: [{ scaleX: 1 - bob.value * 0.25 }],
-  }));
 
   const searching = introDone && !found;
   const short = Math.min(size.width, size.height);
@@ -90,14 +76,11 @@ export function SearchMap({ intro = false, found = false, foundLabel }: SearchMa
 
   return (
     <View style={styles.root} onLayout={(e) => setSize(e.nativeEvent.layout)}>
-      <Animated.View style={[StyleSheet.absoluteFill, panStyle]}>
-        <MapArt />
-      </Animated.View>
+      <MapArt />
 
       {size.width > 0 && (
         <>
-          {searching && !reduceMotion && [0, 1, 2].map((i) => <Ripple key={i} delay={(i * RIPPLE_MS) / 3} cx={cx} cy={cy} />)}
-          {searching && !reduceMotion && <OrbitTruck cx={cx} cy={cy} radius={Math.min(76, short * 0.22)} />}
+          {searching && !reduceMotion && [0, 1].map((i) => <Ripple key={i} delay={(i * RIPPLE_MS) / 2} cx={cx} cy={cy} />)}
 
           {searching &&
             TRUCKS.map((truck, i) => {
@@ -117,20 +100,20 @@ export function SearchMap({ intro = false, found = false, foundLabel }: SearchMa
 
           <View style={[styles.center, { left: cx - 40, top: cy - 40 }]} pointerEvents="none">
             {found ? (
-              <Animated.View entering={ZoomIn.springify().damping(12).stiffness(220)} style={styles.foundBadge}>
+              <Animated.View entering={popIn()} style={styles.foundBadge}>
                 <ShieldCheck size={38} color={Brand.success} strokeWidth={2.25} fill={Brand.success} fillOpacity={0.25} />
               </Animated.View>
             ) : !introDone ? (
-              <Animated.View entering={ZoomIn.springify().damping(12).stiffness(220)} exiting={FadeOut.duration(180)} style={styles.checkBadge}>
+              <Animated.View entering={popIn()} exiting={FadeOut.duration(DURATION.exit)} style={styles.checkBadge}>
                 <Check size={36} color={Brand.onPrimary} strokeWidth={3} />
               </Animated.View>
             ) : (
-              <Animated.View entering={FadeIn.duration(260)} style={styles.pinWrap}>
-                <Animated.View style={pinStyle}>
+              <Animated.View entering={FadeIn.duration(DURATION.card)} style={styles.pinWrap}>
+                <View>
                   <MapPin size={46} color={Brand.link} strokeWidth={1.75} fill={Brand.primary} fillOpacity={1} />
                   <View style={styles.pinDot} />
-                </Animated.View>
-                <Animated.View style={[styles.pinShadow, shadowStyle]} />
+                </View>
+                <View style={styles.pinShadow} />
               </Animated.View>
             )}
           </View>
@@ -157,35 +140,10 @@ function Ripple({ delay, cx, cy }: { delay: number; cx: number; cy: number }) {
     t.set(withDelay(delay, withRepeat(withTiming(1, { duration: RIPPLE_MS, easing: Easing.out(Easing.cubic) }), -1)));
   }, [t, delay]);
   const style = useAnimatedStyle(() => ({
-    opacity: 0.55 * (1 - t.value),
+    opacity: 0.4 * (1 - t.value),
     transform: [{ scale: 0.12 + t.value * 0.88 }],
   }));
   return <Animated.View pointerEvents="none" style={[styles.ripple, { left: cx - RIPPLE / 2, top: cy - RIPPLE / 2 }, style]} />;
-}
-
-const ORBIT_MS = 4200;
-
-/**
- * The "looking for you" truck: it drives a slow circle around the pickup
- * pin, always facing the way it is going, while the nearby trucks are pinged.
- */
-function OrbitTruck({ cx, cy, radius }: { cx: number; cy: number; radius: number }) {
-  const Brand = useBrand();
-  const styles = useStyles();
-  const turn = useSharedValue(0);
-  useEffect(() => {
-    turn.set(withRepeat(withTiming(1, { duration: ORBIT_MS, easing: Easing.linear }), -1));
-  }, [turn]);
-  const orbitStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value * 360}deg` }] }));
-  const size = radius * 2;
-  return (
-    <Animated.View pointerEvents="none" style={[styles.orbit, { left: cx - radius, top: cy - radius, width: size, height: size }, orbitStyle]}>
-      <View style={[styles.orbitPath, { borderRadius: radius }]} />
-      <View style={[styles.orbitTruck, { left: radius - 17, top: -17 }]}>
-        <Truck size={18} color={Brand.onPrimary} strokeWidth={2.25} />
-      </View>
-    </Animated.View>
-  );
 }
 
 function TruckMarker({
@@ -207,25 +165,24 @@ function TruckMarker({
   const styles = useStyles();
   const appear = useSharedValue(0);
   useEffect(() => {
-    appear.set(withDelay(300 + index * 180, withSpring(1, { damping: 14, stiffness: 180 })));
+    appear.set(withDelay(300 + index * 120, withTiming(1, { duration: DURATION.page, easing: CURVE.decelerate })));
   }, [appear, index]);
 
-  // Each truck drifts on its own small loop; the one being "contacted" lifts and glows.
+  // Each truck creeps on its own small, slow loop; the one being "contacted" glows.
   const style = useAnimatedStyle(() => {
     const angle = drift.value * Math.PI * 2 + phase;
-    const lit = Math.max(0, 1 - Math.abs(ping.value - index - 0.5) * 2.2);
     return {
       opacity: appear.value,
       transform: [
-        { translateX: x - 18 + Math.cos(angle) * 10 },
-        { translateY: y - 18 + Math.sin(angle * 1.3) * 7 },
-        { scale: (0.6 + appear.value * 0.4) * (1 + lit * 0.14) },
+        { translateX: x - 18 + Math.cos(angle) * 5 },
+        { translateY: y - 18 + Math.sin(angle) * 4 },
+        { scale: 0.85 + appear.value * 0.15 },
       ],
     };
   });
   const glowStyle = useAnimatedStyle(() => {
     const lit = Math.max(0, 1 - Math.abs(ping.value - index - 0.5) * 2.2);
-    return { opacity: lit * 0.9, transform: [{ scale: 1 + lit * 0.5 }] };
+    return { opacity: lit * 0.9, transform: [{ scale: 1 + lit * 0.4 }] };
   });
 
   return (
@@ -289,26 +246,6 @@ const useStyles = makeStyles((Brand) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbit: {
-    position: 'absolute',
-  },
-  orbitPath: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(249, 115, 22, 0.45)',
-  },
-  orbitTruck: {
-    position: 'absolute',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 3,
-    borderColor: Brand.card,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pinWrap: {
     alignItems: 'center',
   },
@@ -327,6 +264,7 @@ const useStyles = makeStyles((Brand) => ({
     height: 6,
     borderRadius: 3,
     backgroundColor: '#000000',
+    opacity: 0.3,
   },
   checkBadge: {
     width: 72,

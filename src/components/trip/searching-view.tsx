@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { Easing, FadeInDown, FadeOutUp, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { MIcon } from '@/components/ui/m-icon';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { shortVehicleName } from '@/lib/booking-format';
+import { DURATION, enterAt } from '@/lib/motion';
+import { firstName, meetsText } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { searchStart } from '@/lib/trip-machine';
 import { SEARCH_MS } from '@/lib/trip-runner';
@@ -42,8 +44,9 @@ export function SearchingView({ trip, now, onCancel }: SearchingViewProps) {
       <Text style={styles.title} accessibilityRole="header">
         {t('searchingTitle')}
       </Text>
+      {/* The line changes in place: the old one fades out first, the new one rises 8 px into the same spot. */}
       <View style={styles.statusBox} accessibilityLiveRegion="polite">
-        <Animated.Text key={index} entering={FadeInDown.duration(300)} exiting={FadeOutUp.duration(200)} style={styles.status} numberOfLines={1}>
+        <Animated.Text key={index} entering={enterAt(0, 80)} exiting={FadeOut.duration(DURATION.exit)} style={styles.status} numberOfLines={2}>
           {messages[index]}
         </Animated.Text>
       </View>
@@ -55,9 +58,19 @@ export function SearchingView({ trip, now, onCancel }: SearchingViewProps) {
           {shortVehicleName(trip.vehicle)} · {trip.material} · {trip.quantity.split(' · ')[0]}
         </Text>
         <Text style={styles.meet}>{t('meetAt', { place: trip.pickup })}</Text>
+        {trip.forOther && (
+          <View style={styles.forRow}>
+            <MIcon name="account-arrow-right-outline" size={18} color={Brand.link} />
+            <Text style={styles.forText}>
+              {t('forName', { name: trip.forOther.name })} · {meetsText(t, trip.forOther.meets)}
+            </Text>
+          </View>
+        )}
         <View style={styles.pay}>
           <MIcon name="cash" size={16} color={Brand.link} />
-          <Text style={styles.payText}>{t('payDriverChip')}</Text>
+          <Text style={styles.payText}>
+            {trip.forOther?.pays === 'them' ? t('theyPayDriver', { name: firstName(trip.forOther.name) }) : t('payDriverChip')}
+          </Text>
         </View>
       </View>
 
@@ -95,13 +108,19 @@ const useStyles = makeStyles((Brand) => ({
     color: Brand.text,
     textAlign: 'center',
   },
+  // Room for two lines, so a long site name is never cut off; the lines swap in place.
   statusBox: {
-    height: 24,
+    height: 42,
     marginTop: 4,
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   status: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     fontSize: 15,
+    lineHeight: 20,
     fontWeight: '600',
     color: Brand.muted,
     textAlign: 'center',
@@ -145,6 +164,17 @@ const useStyles = makeStyles((Brand) => ({
     fontSize: 19,
     lineHeight: 25,
     fontWeight: '800',
+    color: Brand.text,
+  },
+  forRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  forText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
     color: Brand.text,
   },
   pay: {

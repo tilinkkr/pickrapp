@@ -1,23 +1,24 @@
-import { Linking, Platform, Pressable, Text, View } from 'react-native';
-import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
+import { Linking, Platform, Pressable, Share, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { LoadPhotos } from '@/components/trip/load-photos';
 import { SiteTimer } from '@/components/trip/site-timer';
-import { ActionCell, GlassCard, GlassCell, GlassRow, InfoRow } from '@/components/ui/glass';
+import { ActionCell, cardDelay, GlassCard, GlassCell, GlassRow, InfoRow } from '@/components/ui/glass';
 import { ChevronRight } from '@/components/ui/icons';
 import { MIcon } from '@/components/ui/m-icon';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { shortVehicleName } from '@/lib/booking-format';
 import { freeSecondsLeft, tripFare, waitRate } from '@/lib/fare';
 import { choiceHaptic } from '@/lib/haptics';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt } from '@/lib/motion';
+import { firstName, meetsText, personLine, shareTripText } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { cancelFee } from '@/lib/trip-machine';
 import { formatAgo, formatRupees, STALE_LOCATION_MS } from '@/lib/trip-format';
 import type { Trip } from '@/lib/trips';
 
-/** Cards arrive one after another from just below: a short fade and rise, no bounce. */
-const rise = (row: number) => FadeInDown.duration(300).easing(Easing.out(Easing.cubic)).delay(60 + row * STAGGER_MS * 2);
+/** Anything on the page that is not a grid arrives on the same beat as the grids around it. */
+const rise = (index: number) => enterAt(0, cardDelay(index));
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 /** Demo route length, for the delivery-leg progress bar. */
 const DEMO_ROUTE_KM = 6.2;
@@ -28,7 +29,9 @@ type LivePageProps = { trip: Trip; now: number; onDetails: () => void; onCancel:
  * Driver found → unloading (C14–C17), one page per stage on a plain white
  * sheet. Every page is the same kind of thing: a centred headline, then
  * outlined grids in order of importance, each split by lines that meet the
- * card edge. Orange marks the one grid that matters most on the page.
+ * card edge. Orange marks the one grid that matters most on the page. Each
+ * grid arrives in page order and draws its rows and lines in as it does
+ * (see GlassCard); live numbers inside never replay it.
  */
 export function LivePage(props: LivePageProps) {
   switch (props.trip.stage) {
@@ -52,6 +55,7 @@ function PickupPage({ trip, onDetails, onCancel }: LivePageProps) {
   const fee = cancelFee(trip);
   const driver = trip.driver;
   const stats = driver?.stats;
+  const other = trip.forOther;
 
   return (
     <View style={styles.page}>
@@ -70,42 +74,49 @@ function PickupPage({ trip, onDetails, onCancel }: LivePageProps) {
       )}
 
       {driver && (
-        <Animated.View entering={rise(2)}>
-          <GlassCard>
-            <InfoRow
-              icon="account-hard-hat-outline"
-              label={t(driver.verified ? 'driverVerified' : 'driverUnverified')}
-              value={driver.name}
-              trailing={driver.verified ? <MIcon name="check-decagram" size={20} color={Brand.primary} /> : undefined}
-            />
-            <InfoRow
-              divided
-              icon="truck-outline"
-              label={t('truckLabel')}
-              value={shortVehicleName(trip.vehicle)}
-              trailing={trip.registration ? <Plate text={trip.registration} /> : undefined}
-            />
-            {/* Track record, only from real numbers the server sends (the demo driver's are demo). */}
-            {stats && (
-              <GlassRow>
-                <Stat value={String(stats.trips)} label={t('statTrips')} />
-                <Stat value={`${stats.onTimePct}%`} label={t('statOnTime')} divided />
-                <Stat value={String(stats.cancels)} label={t('statCancels')} divided />
-              </GlassRow>
-            )}
-          </GlassCard>
-        </Animated.View>
+        <GlassCard index={2}>
+          <InfoRow
+            icon="account-hard-hat-outline"
+            label={t(driver.verified ? 'driverVerified' : 'driverUnverified')}
+            value={driver.name}
+            trailing={driver.verified ? <MIcon name="check-decagram" size={20} color={Brand.primary} /> : undefined}
+          />
+          <InfoRow
+            divided
+            icon="truck-outline"
+            label={t('truckLabel')}
+            value={shortVehicleName(trip.vehicle)}
+            trailing={trip.registration ? <Plate text={trip.registration} /> : undefined}
+          />
+          {/* Track record, only from real numbers the server sends (the demo driver's are demo). */}
+          {stats && (
+            <GlassRow>
+              <Stat value={String(stats.trips)} label={t('statTrips')} />
+              <Stat value={`${stats.onTimePct}%`} label={t('statOnTime')} divided />
+              <Stat value={String(stats.cancels)} label={t('statCancels')} divided />
+            </GlassRow>
+          )}
+        </GlassCard>
       )}
 
-      <Animated.View entering={rise(3)}>
-        <GlassCard>
-          <InfoRow icon="map-marker-outline" label={t('pickupLabel')} value={trip.pickup} />
-          <InfoRow divided icon="cash" label={t('payDriverChip')} value={`₹${formatRupees(trip.amount ?? trip.quote ?? 0)} · ${t('afterDelivery')}`} />
-        </GlassCard>
-      </Animated.View>
+      <GlassCard index={3}>
+        <InfoRow icon="map-marker-outline" label={t('pickupLabel')} value={trip.pickup} />
+        <InfoRow
+          divided
+          icon="cash"
+          label={t('payDriverChip')}
+          value={
+            other?.pays === 'them'
+              ? `${t('theyPayDriver', { name: firstName(other.name) })} · ₹${formatRupees(trip.amount ?? trip.quote ?? 0)}`
+              : `₹${formatRupees(trip.amount ?? trip.quote ?? 0)} · ${t('afterDelivery')}`
+          }
+        />
+      </GlassCard>
 
-      <Animated.View entering={rise(4)}>
-        <GlassCard>
+      {other && <PersonGrid trip={trip} index={4} />}
+
+      <View>
+        <GlassCard index={other ? 5 : 4}>
           <GlassRow divided={false}>
             <ActionCell
               icon="phone-outline"
@@ -118,8 +129,12 @@ function PickupPage({ trip, onDetails, onCancel }: LivePageProps) {
             <ActionCell divided danger icon="close-circle-outline" label={t('cancelWord')} onPress={onCancel} />
           </GlassRow>
         </GlassCard>
-        {fee > 0 && <Text style={styles.note}>{t('cancelFeeNote', { amount: formatRupees(fee) })}</Text>}
-      </Animated.View>
+        {fee > 0 && (
+          <Animated.Text entering={rise(other ? 6 : 5)} style={styles.note}>
+            {t('cancelFeeNote', { amount: formatRupees(fee) })}
+          </Animated.Text>
+        )}
+      </View>
 
       <DetailsLink onPress={onDetails} />
     </View>
@@ -134,6 +149,10 @@ function DeliveringPage({ trip, now, onDetails }: LivePageProps) {
   const stale = trip.lastLocationAt ? now - trip.lastLocationAt.getTime() > STALE_LOCATION_MS : true;
   const done = trip.distanceKm != null ? Math.max(0.04, 1 - Math.min(1, trip.distanceKm / DEMO_ROUTE_KM)) : 0.5;
   const driver = trip.driver;
+  // The person receiving the load matters most once it is on its way to them.
+  const receiver = !!trip.forOther && trip.forOther.meets !== 'pickup';
+  const driverAt = receiver ? 4 : 3;
+  const photosAt = driverAt + (driver ? 1 : 0);
 
   return (
     <View style={styles.page}>
@@ -143,43 +162,36 @@ function DeliveringPage({ trip, now, onDetails }: LivePageProps) {
         </Text>
       </Animated.View>
 
-      <Animated.View entering={rise(1)}>
-        <GlassCard accent>
-          <View style={styles.legBox}>
-            <View style={styles.leg}>
-              <View style={[styles.legFill, { width: `${done * 100}%` }]} />
-            </View>
+      <GlassCard accent index={1}>
+        <View style={styles.legBox}>
+          <View style={styles.leg}>
+            <View style={[styles.legFill, { width: `${done * 100}%` }]} />
           </View>
-          <InfoRow divided icon="flag-checkered" label={t('dropLabel')} value={trip.delivery} />
-        </GlassCard>
-      </Animated.View>
+        </View>
+        <InfoRow divided icon="flag-checkered" label={t('dropLabel')} value={trip.delivery} />
+      </GlassCard>
 
-      <Animated.View entering={rise(2)}>
-        <GlassCard>
-          <GlassRow divided={false}>
-            <GlassCell
-              icon="map-marker-distance"
-              value={trip.distanceKm != null ? t('kmValue', { n: trip.distanceKm }) : '—'}
-              label={t('distanceLeft')}
-            />
-            <GlassCell
-              divided
-              icon="crosshairs-gps"
-              value={trip.lastLocationAt ? formatAgo(t, trip.lastLocationAt, now) : t('noLocationYet')}
-              label={t('truckLocation')}
-              warn={stale}
-            />
-          </GlassRow>
-        </GlassCard>
-      </Animated.View>
+      <GlassCard index={2}>
+        <GlassRow divided={false}>
+          <GlassCell
+            icon="map-marker-distance"
+            value={trip.distanceKm != null ? t('kmValue', { n: trip.distanceKm }) : '—'}
+            label={t('distanceLeft')}
+          />
+          <GlassCell
+            divided
+            icon="crosshairs-gps"
+            value={trip.lastLocationAt ? formatAgo(t, trip.lastLocationAt, now) : t('noLocationYet')}
+            label={t('truckLocation')}
+            warn={stale}
+          />
+        </GlassRow>
+      </GlassCard>
 
-      {driver && (
-        <Animated.View entering={rise(3)}>
-          <DriverGrid trip={trip} />
-        </Animated.View>
-      )}
+      {receiver && <PersonGrid trip={trip} index={3} />}
+      {driver && <DriverGrid trip={trip} index={driverAt} />}
 
-      <Animated.View entering={rise(4)}>
+      <Animated.View entering={rise(photosAt)}>
         <LoadPhotos trip={trip} />
       </Animated.View>
 
@@ -196,6 +208,10 @@ function SitePage({ trip, now, onDetails }: LivePageProps) {
   const left = freeSecondsLeft(trip, now);
   const over = left !== null && left <= 0;
   const waiting = tripFare(trip, now).lines.find((line) => line.key === 'waiting');
+  // The other person, if they are the one standing at this site.
+  const here = !!trip.forOther && (trip.forOther.meets === 'both' || trip.forOther.meets === (loading ? 'pickup' : 'drop'));
+  const driverAt = here ? 4 : 3;
+  const photosAt = driverAt + (trip.driver ? 1 : 0);
 
   return (
     <View style={styles.page}>
@@ -214,23 +230,18 @@ function SitePage({ trip, now, onDetails }: LivePageProps) {
         </Animated.View>
       )}
 
-      <Animated.View entering={rise(2)}>
-        <GlassCard accent={over}>
-          <GlassRow divided={false}>
-            <GlassCell icon="timer-sand" value={`₹${formatRupees(waiting?.amount ?? 0)}`} label={t('extraSoFar')} warn={over} />
-            <GlassCell divided icon="clock-outline" value={`₹${waitRate(trip.vehicle)}/${t('minUnit')}`} label={t('afterFree')} />
-          </GlassRow>
-        </GlassCard>
-      </Animated.View>
+      <GlassCard accent={over} index={2}>
+        <GlassRow divided={false}>
+          <GlassCell icon="timer-sand" value={`₹${formatRupees(waiting?.amount ?? 0)}`} label={t('extraSoFar')} warn={over} />
+          <GlassCell divided icon="clock-outline" value={`₹${waitRate(trip.vehicle)}/${t('minUnit')}`} label={t('afterFree')} />
+        </GlassRow>
+      </GlassCard>
 
-      {trip.driver && (
-        <Animated.View entering={rise(3)}>
-          <DriverGrid trip={trip} />
-        </Animated.View>
-      )}
+      {here && <PersonGrid trip={trip} index={3} />}
+      {trip.driver && <DriverGrid trip={trip} index={driverAt} />}
 
       {loading && (
-        <Animated.View entering={rise(4)}>
+        <Animated.View entering={rise(photosAt)}>
           <LoadPhotos trip={trip} />
         </Animated.View>
       )}
@@ -240,12 +251,41 @@ function SitePage({ trip, now, onDetails }: LivePageProps) {
   );
 }
 
+/**
+ * Booked for someone else: who they are, where they meet the truck, and two
+ * actions. "Share trip" opens the phone's own share sheet with the trip
+ * details (and the start PIN when they meet the truck at pickup); Pickr sends
+ * nothing itself.
+ */
+function PersonGrid({ trip, index }: { trip: Trip; index: number }) {
+  const { t } = useSession();
+  const person = trip.forOther!;
+  const name = firstName(person.name);
+  return (
+    <GlassCard index={index}>
+      <InfoRow icon="account-arrow-right-outline" label={`${t('bookedFor')} · ${meetsText(t, person.meets)}`} value={personLine(person)} />
+      <GlassRow>
+        <ActionCell icon="phone-outline" label={t('callPerson', { name })} onPress={() => Linking.openURL(`tel:+91${person.phone}`)} />
+        <ActionCell
+          divided
+          icon="share-variant-outline"
+          label={t('shareTrip')}
+          onPress={() => {
+            choiceHaptic();
+            Share.share({ message: shareTripText(t, trip) }).catch(() => {});
+          }}
+        />
+      </GlassRow>
+    </GlassCard>
+  );
+}
+
 /** Driver, truck and Call as one lined grid, for the pages after pickup. */
-function DriverGrid({ trip }: { trip: Trip }) {
+function DriverGrid({ trip, index }: { trip: Trip; index: number }) {
   const { t } = useSession();
   const driver = trip.driver!;
   return (
-    <GlassCard>
+    <GlassCard index={index}>
       <InfoRow
         icon="account-hard-hat-outline"
         label={shortVehicleName(trip.vehicle)}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -11,7 +11,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles } from '@/lib/app-theme';
 import { selectionHaptic, successHaptic } from '@/lib/haptics';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { isActive, isPast, type Trip, useTrips } from '@/lib/trips';
 
@@ -77,7 +77,7 @@ export default function RidesScreen() {
           <EmptyState icon={Truck} title={t(trips.length === 0 ? 'noLoads' : 'noLoadsFiltered')} />
         ) : (
           shown.map((trip, i) => (
-            <Animated.View key={trip.id} entering={FadeInDown.delay(i * STAGGER_MS).springify().damping(18)} layout={LinearTransition}>
+            <Animated.View key={trip.id} entering={enterAt(0, i * STAGGER_MS)} layout={LinearTransition}>
               <TripCard trip={trip} />
             </Animated.View>
           ))

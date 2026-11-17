@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MIcon, type MIconName } from '@/components/ui/m-icon';
@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { SERVICE_COPY, setServiceStatus, useServiceStatus } from '@/lib/service-status';
 import { useSession } from '@/lib/session';
+import { enterAt } from '@/lib/motion';
 
 /**
  * One page for every "we can't take that booking right now" case (handoff
@@ -48,16 +49,16 @@ export default function ServiceStateScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.center}>
-        <Animated.View entering={FadeInDown.duration(320)} style={styles.art}>
+        <Animated.View entering={enterAt()} style={styles.art}>
           <Animated.View style={[styles.halo, halo]} />
           <View style={styles.disc}>
             <MIcon name={copy.icon as MIconName} size={52} color={Brand.onPrimary} />
           </View>
         </Animated.View>
-        <Animated.Text entering={FadeInDown.delay(80).duration(320)} style={styles.title} accessibilityRole="header">
+        <Animated.Text entering={enterAt(0, 80)} style={styles.title} accessibilityRole="header">
           {t(copy.title)}
         </Animated.Text>
-        <Animated.Text entering={FadeInDown.delay(140).duration(320)} style={styles.body}>
+        <Animated.Text entering={enterAt(0, 140)} style={styles.body}>
           {t(copy.body)}
         </Animated.Text>
       </View>

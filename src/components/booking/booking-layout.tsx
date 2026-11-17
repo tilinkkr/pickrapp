@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from '@/components/ui/icons';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { stepsFor, useBooking } from '@/lib/booking';
+import { CURVE } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 
 type BookingLayoutProps = PropsWithChildren<{
@@ -119,7 +120,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
   const styles = useStyles();
   const fill = useSharedValue(0);
   useEffect(() => {
-    fill.set(withTiming(1, { duration: 450 }));
+    fill.set(withTiming(1, { duration: 450, easing: CURVE.decelerate }));
   }, [fill]);
   const currentStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
 

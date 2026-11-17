@@ -5,9 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import Animated, {
   Easing,
   FadeIn,
-  FadeInDown,
-  FadeInUp,
-  FadeOutUp,
+  FadeOut,
   LinearTransition,
   useAnimatedStyle,
   useReducedMotion,
@@ -29,6 +27,7 @@ import { asapBlockedUntil, DEFAULT_SCHEDULE } from '@/lib/schedule';
 import { useSession } from '@/lib/session';
 import { useSites } from '@/lib/sites';
 import { type Answers, parseAll, parseQuantity, parseWhen, type Slot, SLOTS, type When } from '@/lib/voice';
+import { enterAt } from '@/lib/motion';
 
 /**
  * Voice booking (handoff C10): a guided conversation that fills the same
@@ -254,8 +253,8 @@ export default function VoiceBooking() {
           <View style={styles.questionBox} accessibilityLiveRegion="polite">
             <Animated.Text
               key={finished ? 'done' : question}
-              entering={FadeInDown.duration(320)}
-              exiting={FadeOutUp.duration(160)}
+              entering={enterAt()}
+              exiting={FadeOut.duration(150)}
               style={styles.question}
               accessibilityRole="header">
               {finished ? t('voiceDone') : question}
@@ -268,7 +267,7 @@ export default function VoiceBooking() {
             )}
           </View>
           {missed && (
-            <Animated.Text entering={FadeInUp.duration(200)} style={styles.missed}>
+            <Animated.Text entering={enterAt()} style={styles.missed}>
               {slot === 'when' && asapBlockedUntil(new Date()) ? t('asapNowBlocked') : t('voiceNotUnderstood')}
             </Animated.Text>
           )}
@@ -276,7 +275,7 @@ export default function VoiceBooking() {
           {!finished && (
             <View style={styles.suggestions}>
               {suggestions.map((s, i) => (
-                <Animated.View key={`${slot}-${s.label}`} entering={FadeInDown.delay(80 + i * 40).duration(260)}>
+                <Animated.View key={`${slot}-${s.label}`} entering={enterAt(0, 80 + i * 40)}>
                   <PressableScale onPress={s.onPress} accessibilityRole="button" style={styles.suggestion}>
                     <Text style={styles.suggestionText} numberOfLines={1}>
                       {s.label}

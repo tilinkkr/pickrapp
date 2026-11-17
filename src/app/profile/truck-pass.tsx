@@ -1,12 +1,12 @@
 import { Linking, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { ExternalLink, FileText } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 
 /** KOMPAS, the Kerala Department of Mining and Geology portal that issues mineral transit passes. */
@@ -23,7 +23,7 @@ export default function TruckPassScreen() {
     <ProfilePage
       title={t('truckPass')}
       footer={<PrimaryButton label={t('openPortal')} icon={ExternalLink} onPress={() => Linking.openURL(PORTAL).catch(() => {})} />}>
-      <Animated.View entering={FadeInDown.duration(260)} style={styles.intro}>
+      <Animated.View entering={enterAt()} style={styles.intro}>
         <View style={styles.introIcon}>
           <FileText size={24} color={Brand.onPrimary} strokeWidth={2.25} />
         </View>
@@ -32,7 +32,7 @@ export default function TruckPassScreen() {
 
       <View style={styles.steps}>
         {STEPS.map((step, i) => (
-          <Animated.View key={step} entering={FadeInDown.delay(STAGGER_MS * (1 + i)).springify().damping(18)} style={styles.step}>
+          <Animated.View key={step} entering={enterAt(0, STAGGER_MS * (1 + i))} style={styles.step}>
             <View style={styles.rail}>
               <View style={[styles.num, i === 3 && styles.numApp]}>
                 <Text style={[styles.numText, i === 3 && styles.numTextApp]}>{i + 1}</Text>

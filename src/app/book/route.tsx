@@ -1,22 +1,24 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, Text, TextInput, type TextInputInstance, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
+import { ForWhomChip, ForWhomSheet } from '@/components/booking/for-whom';
 import { History, LocateFixed, MapIcon, Pin, TriangleAlert, X } from '@/components/ui/icons';
 import { Brand } from '@/constants/theme';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { type Site, useBooking } from '@/lib/booking';
-import { choiceHaptic, errorHaptic, selectionHaptic, successHaptic, tapHaptic } from '@/lib/haptics';
+import { choiceHaptic, errorHaptic, selectionHaptic, tapHaptic } from '@/lib/haptics';
 import { locateSite } from '@/lib/locate';
 import { useSession } from '@/lib/session';
 import { asSite, useSites } from '@/lib/sites';
+import { enterAt } from '@/lib/motion';
 
 type Field = 'pickup' | 'delivery';
 /** Long enough to see the site land in the card before the next step slides in. */
 const ADVANCE_MS = 450;
-type Failure = { kind: 'denied'; canAskAgain: boolean } | { kind: 'failed' } | null;
+type Failure = { kind: 'denied'; canAskAgain: boolean } | { kind: 'failed' } | { kind: 'outside' } | null;
 
 const PICKUP_DOT = Brand.success;
 const DELIVERY_DOT = Brand.primary;
@@ -35,6 +37,7 @@ export default function RouteStep() {
   const [active, setActive] = useState<Field>(draft.pickup ? 'delivery' : 'pickup');
   const [locating, setLocating] = useState(false);
   const [failure, setFailure] = useState<Failure>(null);
+  const [whoOpen, setWhoOpen] = useState(false);
   const deliveryInput = useRef<TextInputInstance>(null);
 
   const set = (field: Field, site: Site | null) => update(field === 'pickup' ? { pickup: site } : { delivery: site });
@@ -43,11 +46,10 @@ export default function RouteStep() {
   const leaving = useRef(false);
   const seen = useRef({ pickup: draft.pickup?.label, delivery: draft.delivery?.label });
 
-  /** No Continue button: once both sites are set the next step slides in by itself. */
+  /** No Continue button: once both sites are set the next step slides in by itself (seen, not felt). */
   function advance() {
     if (leaving.current) return;
     leaving.current = true;
-    successHaptic();
     setTimeout(() => {
       leaving.current = false;
       router.push('/book/site');
@@ -82,16 +84,36 @@ export default function RouteStep() {
     const result = await locateSite(t('pinnedLocation'));
     setLocating(false);
     if (result.ok) {
-      successHaptic();
+      selectionHaptic();
       fill(result.site);
     } else {
       errorHaptic();
-      setFailure(result.reason === 'denied' ? { kind: 'denied', canAskAgain: result.canAskAgain } : { kind: 'failed' });
+      setFailure(
+        result.reason === 'denied'
+          ? { kind: 'denied', canAskAgain: result.canAskAgain }
+          : result.reason === 'outside'
+            ? { kind: 'outside' }
+            : { kind: 'failed' }
+      );
     }
   }
 
   return (
     <BookingLayout title={t('routeTitle')} step={2}>
+      {/* Who the truck is for (Uber's rider switch): "For me" until changed. */}
+      <View style={styles.forRow}>
+        <ForWhomChip person={draft.forOther} onPress={() => setWhoOpen(true)} />
+      </View>
+      <ForWhomSheet
+        visible={whoOpen}
+        person={draft.forOther}
+        onClose={() => setWhoOpen(false)}
+        onDone={(person) => {
+          update({ forOther: person });
+          setWhoOpen(false);
+        }}
+      />
+
       <View style={styles.card}>
         <FieldRow
           field="pickup"
@@ -144,7 +166,7 @@ export default function RouteStep() {
           <TriangleAlert size={18} color={Brand.warning} strokeWidth={2} />
           <View style={styles.flex}>
             <Text style={styles.failureText}>
-              {failure.kind === 'denied' ? t('locationDeniedForm') : t('locationFailedForm')}
+              {failure.kind === 'denied' ? t('locationDeniedForm') : failure.kind === 'outside' ? t('gpsOutsideArea') : t('locationFailedForm')}
             </Text>
             {failure.kind === 'denied' && !failure.canAskAgain && (
               <Pressable onPress={() => Linking.openSettings().catch(() => {})} accessibilityRole="link" hitSlop={8}>
@@ -163,7 +185,7 @@ export default function RouteStep() {
             return (
               <Animated.View
                 key={site.id}
-                entering={FadeInDown.delay(i * 40).duration(260)}
+                entering={enterAt(0, i * 40)}
                 style={[styles.row, i > 0 && styles.rowBorder, taken && styles.rowTaken]}>
                 <Pressable
                   onPress={() => {
@@ -273,7 +295,8 @@ function Pill({ icon: Icon, label, busy, onPress }: { icon: typeof MapIcon; labe
       accessibilityState={{ busy }}
       style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}>
       {busy ? <ActivityIndicator size="small" color={Brand.text} /> : <Icon size={18} color={Brand.text} strokeWidth={2} />}
-      <Text style={styles.pillText} numberOfLines={1}>
+      {/* Two lines rather than a cut-off label on narrow phones and in Malayalam. */}
+      <Text style={styles.pillText} numberOfLines={2}>
         {label}
       </Text>
     </Pressable>
@@ -286,6 +309,10 @@ const useStyles = makeStyles((Brand) => ({
   },
   pressed: {
     opacity: 0.6,
+  },
+  forRow: {
+    marginBottom: 12,
+    flexDirection: 'row',
   },
   card: {
     paddingHorizontal: 14,
@@ -362,7 +389,8 @@ const useStyles = makeStyles((Brand) => ({
   },
   pillText: {
     flexShrink: 1,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 17,
     fontWeight: '600',
     color: Brand.text,
   },

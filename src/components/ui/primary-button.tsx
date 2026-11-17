@@ -1,8 +1,9 @@
 import { CheckCircle2, type LucideIcon } from '@/components/ui/icons';
 import { ActivityIndicator, Text, View } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { makeStyles, useBrand } from '@/lib/app-theme';
+import { popIn } from '@/lib/motion';
 
 import { DuoIcon } from './duo-icon';
 import { PressableScale } from './pressable-scale';
@@ -50,7 +51,7 @@ export function PrimaryButton({
       ]}>
       <View style={styles.content}>
         {success ? (
-          <Animated.View key="success" entering={ZoomIn.springify().stiffness(280).damping(18)}>
+          <Animated.View key="success" entering={popIn()}>
             <DuoIcon icon={CheckCircle2} fill={iconFill} />
           </Animated.View>
         ) : loading ? (

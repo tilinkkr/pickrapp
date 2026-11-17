@@ -1,12 +1,13 @@
 import { Image, type ImageProps } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming, ZoomIn } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { MIcon } from '@/components/ui/m-icon';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { photoSource, REQUIRED_PHOTOS } from '@/lib/load-photos';
+import { popIn } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import type { Trip } from '@/lib/trips';
 
@@ -40,7 +41,7 @@ export function LoadPhotos({ trip }: { trip: Trip }) {
         {Array.from({ length: Math.min(slots, 4) }, (_, i) => {
           const key = photos[i];
           return key ? (
-            <Animated.View key={key} entering={ZoomIn.duration(260).easing(Easing.out(Easing.cubic))} style={styles.cell}>
+            <Animated.View key={key} entering={popIn()} style={styles.cell}>
               <Pressable onPress={() => setOpen(key)} accessibilityRole="imagebutton" accessibilityLabel={`${t('loadPhotos')} ${i + 1}`}>
                 <Image source={photoSource(key) as ImageProps['source']} style={styles.photo} contentFit="cover" transition={200} />
                 <View style={styles.badge}>
@@ -74,10 +75,13 @@ function WaitingSlot() {
     if (!reduced) glow.set(withRepeat(withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sin) }), -1, true));
   }, [reduced, glow]);
   const style = useAnimatedStyle(() => ({ opacity: 0.55 + glow.value * 0.45 }));
+  // The fade-in sits on its own wrapper so it never fights the breathing opacity (Reanimated warns otherwise).
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={[styles.photo, styles.empty, style]}>
-      <MIcon name="camera-outline" size={22} color={Brand.link} />
-      <Text style={styles.wait}>{t('waitingDriver')}</Text>
+    <Animated.View entering={FadeIn.duration(200)}>
+      <Animated.View style={[styles.photo, styles.empty, style]}>
+        <MIcon name="camera-outline" size={22} color={Brand.link} />
+        <Text style={styles.wait}>{t('waitingDriver')}</Text>
+      </Animated.View>
     </Animated.View>
   );
 }

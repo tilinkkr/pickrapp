@@ -1,7 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
 import { BackHandler, Text, View } from 'react-native';
-import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { BookingLayout } from '@/components/booking/booking-layout';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -11,6 +11,7 @@ import { makeStyles, useBrand } from '@/lib/app-theme';
 import { useSession } from '@/lib/session';
 import { formatRupees, formatWhen } from '@/lib/trip-format';
 import { useTrips } from '@/lib/trips';
+import { enterAt, popIn } from '@/lib/motion';
 
 /**
  * Confirmation after "Submit request". The booking flow is finished, so back
@@ -64,10 +65,10 @@ export default function SubmittedScreen() {
         </View>
       }>
       <View style={styles.hero}>
-        <Animated.View entering={ZoomIn.springify().damping(14).stiffness(180)} style={styles.check}>
+        <Animated.View entering={popIn()} style={styles.check}>
           <Check size={44} color="#FFFFFF" strokeWidth={3} />
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(150).duration(300)} style={styles.heroText}>
+        <Animated.View entering={enterAt(0, 150)} style={styles.heroText}>
           <Text style={styles.title} accessibilityRole="header">
             {t('submitted')}
           </Text>
@@ -79,7 +80,7 @@ export default function SubmittedScreen() {
         </Animated.View>
       </View>
 
-      <Animated.View entering={FadeInDown.delay(250).duration(300)} style={styles.details}>
+      <Animated.View entering={enterAt(0, 250)} style={styles.details}>
         <View style={styles.codeRow}>
           <Text style={styles.codeLabel}>{t('tripCode')}</Text>
           <Text style={styles.code}>{trip.code}</Text>

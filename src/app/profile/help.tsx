@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { RouteSummary } from '@/components/booking/route-summary';
 import { ProfilePage } from '@/components/profile/settings';
@@ -13,7 +13,7 @@ import { makeStyles, useBrand } from '@/lib/app-theme';
 import { shortVehicleName } from '@/lib/booking-format';
 import { selectionHaptic } from '@/lib/haptics';
 import type { StringKey } from '@/lib/i18n';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { formatWhen, stageColors } from '@/lib/trip-format';
 import { isPast, useTrips } from '@/lib/trips';
@@ -63,7 +63,7 @@ export default function HelpScreen() {
       </View>
 
       {last && !q && (
-        <Animated.View entering={FadeInDown.duration(260)}>
+        <Animated.View entering={enterAt()}>
           <View style={styles.sectionRow}>
             <Text style={styles.section}>{t('yourLastRide')}</Text>
             <Pressable onPress={() => router.push('/profile/rides')} accessibilityRole="button" hitSlop={8} style={styles.viewAll}>
@@ -92,7 +92,7 @@ export default function HelpScreen() {
       )}
 
       {!q && (
-        <Animated.View entering={FadeInDown.delay(STAGGER_MS).duration(260)} style={styles.issue}>
+        <Animated.View entering={enterAt(0, STAGGER_MS)} style={styles.issue}>
           <Text style={styles.issueTitle}>{t('havingIssue')}</Text>
           <PressableScale
             onPress={() => {
@@ -114,7 +114,7 @@ export default function HelpScreen() {
         <Text style={[styles.section, styles.faqHead]}>{t('faqs')}</Text>
         <Animated.View layout={LinearTransition} style={styles.grid}>
           {faqs.map((faq, i) => (
-            <Animated.View key={faq.title} entering={FadeInDown.delay(STAGGER_MS * (2 + i)).springify().damping(18)} style={styles.cell}>
+            <Animated.View key={faq.title} entering={enterAt(0, STAGGER_MS * (2 + i))} style={styles.cell}>
               <PressableScale
                 onPress={() => {
                   selectionHaptic();

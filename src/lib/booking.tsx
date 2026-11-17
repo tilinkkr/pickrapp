@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type CategoryId, getItem, QUANTITY, quoteTrucks, type VehicleId } from './catalog';
+import type { OtherPerson } from './people';
 import type { ScheduleInput } from './schedule';
 
 export type Site = {
@@ -26,6 +27,8 @@ export type BookingDraft = {
   /** Photo of the KOMPAS mineral transit pass (local URI), required before review for sand, jelly and soil. */
   transitPassPhoto?: string;
   when: { mode: 'now' } | ({ mode: 'schedule' } & ScheduleInput);
+  /** Booking for someone else: who meets the truck and who pays the driver. Unset means "for me". */
+  forOther?: OtherPerson | null;
 };
 
 const EMPTY: BookingDraft = {
@@ -64,7 +67,7 @@ type BookingContextValue = {
   chooseItem: (itemId: string) => void;
   setQuantity: (quantity: number) => void;
   setVehicle: (vehicleId: VehicleId) => void;
-  update: (patch: Partial<Pick<BookingDraft, 'pickup' | 'delivery' | 'notes' | 'transitPass' | 'transitPassPhoto' | 'when'>>) => void;
+  update: (patch: Partial<Pick<BookingDraft, 'pickup' | 'delivery' | 'notes' | 'transitPass' | 'transitPassPhoto' | 'when' | 'forOther'>>) => void;
   reset: () => void;
 };
 

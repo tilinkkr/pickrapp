@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import Animated, { Easing, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { ProfilePage } from '@/components/profile/settings';
 import { EmptyState } from '@/components/trips/empty-state';
@@ -11,7 +11,7 @@ import { MIcon, type MIconName } from '@/components/ui/m-icon';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { makeStyles, useBrand } from '@/lib/app-theme';
 import { selectionHaptic, successHaptic } from '@/lib/haptics';
-import { STAGGER_MS } from '@/lib/motion';
+import { enterAt, STAGGER_MS } from '@/lib/motion';
 import { useSession } from '@/lib/session';
 import { type SavedSite, useSites } from '@/lib/sites';
 
@@ -75,7 +75,7 @@ export default function FavouritesScreen() {
             <Animated.View
               key={site.id}
               layout={LinearTransition.duration(220)}
-              entering={FadeInDown.duration(260).easing(Easing.out(Easing.cubic)).delay(i * STAGGER_MS)}
+              entering={enterAt(0, i * STAGGER_MS)}
               exiting={FadeOut.duration(160)}
               style={styles.card}>
               <View style={styles.row}>
